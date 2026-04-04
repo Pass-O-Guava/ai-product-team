@@ -160,13 +160,32 @@
 
 ---
 
-## 十一、待办追踪
+## 十一、项目状态追踪
 
-- [ ] 5个专属调研智能体并行调研中（今日任务）
-- [ ] 每日沉淀产出（knowledge + skills + demos）
-- [ ] v0.2 调研报告交付
-- [ ] 整改9个FAIL模型（Qwen3-Omni等）
-- [ ] GLM-5V-Turbo（Z.ai，2026-04-01）纳入下一轮调研
+### SOTA模型仓
+- GitHub：https://github.com/Pass-O-Guava/ai-product-team
+- v0.1：FAIL 5.2/10 ✅ 复盘完成
+- v0.2：FAIL 4.8/10 ✅ P0整改完成（commit b7027ea）→ P0-C核查中
+- v0.3：待交付
+
+### v0.2 P0-C 剩余待核查（8项）
+Qwen3-VL开源状态 / Kimi K2.5发布日期 / Cosmos R2许可证 / Sensenova Mars开源状态 / InternVideo Next开源状态 / Phi-4-vision Benchmark数据 / Phi-4-vision两版合并
+
+## 十二、待办
+
+- [x] 团队骨架搭建
+- [x] GitHub Repo创建并推送
+- [x] SOTA模型仓v0.1+v0.2调研完成
+- [x] @reviewer v0.1+v0.2质检报告上线
+- [x] @researcher反思报告+七条调研纪律
+- [x] 团队架构升级（@coordinator+5专属调研员）
+- [x] 调研标准操作手册建立
+- [x] 每日沉淀规范建立
+- [x] 竞争机制建立
+- [ ] P0-C剩余8项核查
+- [ ] v0.2 @reviewer复审
+- [ ] v0.3交付
+- [ ] GLM-5V-Turbo（Z.ai，2026-04-01）下一轮调研
 
 ---
 
