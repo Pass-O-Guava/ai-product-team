@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>执行摘要</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#0a0f2e;color:#fff}
+  .slide{width:100vw;height:100vh;display:flex;flex-direction:column;padding:60px 80px;position:relative;overflow:hidden}
+  .header{ display:flex;align-items:center;gap:16px;margin-bottom:48px}
+  .header .tag{font-size:13px;letter-spacing:3px;color:#3b82f6;text-transform:uppercase;font-weight:600}
+  .header .num{font-size:13px;color:#334155;font-weight:700}
+  .title{font-size:38px;font-weight:700;color:#fff;margin-bottom:40px}
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:36px}
+  .metric-card{background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(16,185,129,0.08));border:1px solid rgba(59,130,246,0.2);border-radius:16px;padding:28px 24px;text-align:center}
+  .metric-card .number{font-size:48px;font-weight:800;color:#3b82f6;line-height:1}
+  .metric-card .unit{font-size:16px;color:#93c5fd;font-weight:300;margin-left:4px}
+  .metric-card .label{font-size:14px;color:#94a3b8;margin-top:10px;line-height:1.4}
+  .metric-card.green .number{color:#10b981}
+  .metric-card.orange .number{color:#f59e0b}
+  .highlight-box{background:rgba(59,130,246,0.08);border-left:4px solid #3b82f6;border-radius:0 12px 12px 0;padding:24px 28px;margin-bottom:24px}
+  .highlight-box p{font-size:18px;color:#e2e8f0;line-height:1.8}
+  .highlight-box .biz{color:#93c5fd;font-weight:600}
+  .footer{position:absolute;bottom:36px;left:80px;right:80px;display:flex;justify-content:space-between;align-items:center}
+  .footer .note{font-size:12px;color:#475569}
+  .footer .page{font-size:13px;color:#334155}
+  .tag{font-size:13px;letter-spacing:3px;color:#3b82f6;text-transform:uppercase;font-weight:600;margin-bottom:24px}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="header"><span class="tag">Executive Summary</span><span class="num">02 / 14</span></div>
+  <div class="title">Q1 这张图，高管只需记住 5 件事</div>
+  <div class="summary-grid">
+    <div class="metric-card">
+      <div class="number">95<span class="unit">%+</span></div>
+      <div class="label">意图识别准确率<br>覆盖8条产线</div>
+    </div>
+    <div class="metric-card green">
+      <div class="number">17.5<span class="unit">%</span></div>
+      <div class="label">用户等待时间降低<br>TTFT首字响应优化</div>
+    </div>
+    <div class="metric-card orange">
+      <div class="number">4<span class="unit">个</span></div>
+      <div class="label">国产算力模型上线<br>海光K100全面适配</div>
+    </div>
+    <div class="metric-card">
+      <div class="number">52<span class="unit">%</span></div>
+      <div class="label">排障规划准确率<br>业务场景翻倍提升</div>
+    </div>
+    <div class="metric-card green">
+      <div class="number">12<span class="unit">项</span></div>
+      <div class="label">专利推进<br>核心领域全覆盖</div>
+    </div>
+    <div class="metric-card orange">
+      <div class="number">18<span class="unit">个</span></div>
+      <div class="label">问题单解决<br>3个项目验收完成</div>
+    </div>
+  </div>
+  <div class="highlight-box">
+    <p>💡 <span class="biz">核心叙事：</span>本季度我们完成了从"技术验证"到"业务交付"的跨越——国产算力正式支撑招标文件生成业务上线，18个问题单闭环，团队具备持续为业务创造价值的能力。</p>
+  </div>
+  <div class="footer"><span class="note">SCQA模型 · 2026年Q1 AI模型工程团队述职</span><span class="page">02 / 14</span></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q1技术成果地图</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#0a0f2e;color:#fff}
+  .slide{width:100vw;height:100vh;display:flex;flex-direction:column;padding:60px 80px;position:relative;overflow:hidden}
+  .tag{font-size:13px;letter-spacing:3px;color:#3b82f6;text-transform:uppercase;font-weight:600;margin-bottom:20px}
+  .slide-num{font-size:13px;color:#334155;font-weight:700;margin-bottom:20px}
+  .title{font-size:38px;font-weight:700;color:#fff;margin-bottom:40px}
+  .map{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:20px;flex:1}
+  .item{padding:24px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;background:rgba(255,255,255,0.02)}
+  .item .icon{font-size:28px;margin-bottom:4px}
+  .item .name{font-size:16px;font-weight:700;color:#fff}
+  .item .desc{font-size:13px;color:#94a3b8;line-height:1.6;flex:1}
+  .item .score{display:flex;align-items:baseline;gap:6px;margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)}
+  .item .score-num{font-size:28px;font-weight:800}
+  .item .score-label{font-size:12px;color:#64748b}
+  .item.c1{border-color:rgba(59,130,246,0.2)}.item.c1 .score-num{color:#3b82f6}
+  .item.c2{border-color:rgba(16,185,129,0.2)}.item.c2 .score-num{color:#10b981}
+  .item.c3{border-color:rgba(139,92,246,0.2)}.item.c3 .score-num{color:#8b5cf6}
+  .item.c4{border-color:rgba(245,158,11,0.2)}.item.c4 .score-num{color:#f59e0b}
+  .item.c5{border-color:rgba(239,68,68,0.2)}.item.c5 .score-num{color:#ef4444}
+  .item.c6{border-color:rgba(236,72,153,0.2)}.item.c6 .score-num{color:#ec4899}
+  .footer{position:absolute;bottom:36px;left:80px;right:80px;display:flex;justify-content:space-between}
+  .footer .note{font-size:12px;color:#475569}
+  .footer .page{font-size:13px;color:#334155}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="tag">Q1 Technical Achievement Map</div>
+  <div class="slide-num">05 / 14</div>
+  <div class="title">Q1 技术成果地图：6条主线全面突破</div>
+  <div class="map">
+    <div class="item c1">
+      <div class="icon">🎯</div>
+      <div class="name">意图识别</div>
+      <div class="desc">小贝模块上线运行，覆盖8个产线场景，693条测试用例</div>
+      <div class="score"><span class="score-num">95%+</span><span class="score-label">准确率 · PARSE_ERROR清零</span></div>
+    </div>
+    <div class="item c2">
+      <div class="icon">🧩</div>
+      <div class="name">模型规划能力</div>
+      <div class="desc">LoRA微调打通从测评→训练→验证完整闭环</div>
+      <div class="score"><span class="score-num">26%→52%</span><span class="score-label">排障准确率翻倍</span></div>
+    </div>
+    <div class="item c3">
+      <div class="icon">⚡</div>
+      <div class="name">推理框架优化</div>
+      <div class="desc">缓存感知调度，TTFT/吞吐全面提升，国产算力突破</div>
+      <div class="score"><span class="score-num">TTFT -17.5%</span><span class="score-label">多轮对话场景</span></div>
+    </div>
+    <div class="item c4">
+      <div class="icon">🖥️</div>
+      <div class="name">国产算力适配</div>
+      <div class="desc">海光K100四大模型全量适配，支撑招标文件业务上线</div>
+      <div class="score"><span class="score-num">4个模型</span><span class="score-label">正式上线 · 业务交付</span></div>
+    </div>
+    <div class="item c5">
+      <div class="icon">🔬</div>
+      <div class="name">拟人化训练</div>
+      <div class="desc">5种RL算法全面适配，形成SFT+DPO+GRPO组合训练方案</div>
+      <div class="score"><span class="score-num">5种RL</span><span class="score-label">算法覆盖 · 3框架支持</span></div>
+    </div>
+    <div class="item c6">
+      <div class="icon">🛡️</div>
+      <div class="name">技术壁垒</div>
+      <div class="desc">12项专利推进，白皮书发布，评估体系全流程闭环</div>
+      <div class="score"><span class="score-num">12项专利</span><span class="score-label">已确认7项 · 白皮书完成</span></div>
+    </div>
+  </div>
+  <div class="footer"><span class="note">SCQA模型 · 2026年Q1 AI模型工程团队述职</span><span class="page">05 / 14</span></div>
+</div>
+</body>
+</html>

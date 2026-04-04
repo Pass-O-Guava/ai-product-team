@@ -1,0 +1,20 @@
+{"ts":"2026-04-03T15:51:57.112Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"1","accountId":"main"}
+{"ts":"2026-04-03T15:52:09.479Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"/model","accountId":"main"}
+{"ts":"2026-04-03T15:52:18.330Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"/models","accountId":"main"}
+{"ts":"2026-04-03T15:52:24.516Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"/modelminimax","accountId":"main"}
+{"ts":"2026-04-03T15:52:40.938Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"/models minimax","accountId":"main"}
+{"ts":"2026-04-03T15:52:56.223Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"/model minimax-m2.7","accountId":"main"}
+{"ts":"2026-04-03T15:53:06.371Z","dir":"in","channel":"webchat","from":"","content":"/models"}
+{"ts":"2026-04-03T15:53:17.139Z","dir":"in","channel":"webchat","from":"","content":"/models minimax"}
+{"ts":"2026-04-03T15:53:41.300Z","dir":"in","channel":"webchat","from":"","content":"/models minimax all"}
+{"ts":"2026-04-03T15:53:49.018Z","dir":"in","channel":"webchat","from":"","content":"/status"}
+{"ts":"2026-04-03T15:54:02.272Z","dir":"in","channel":"webchat","from":"","content":"/compact"}
+{"ts":"2026-04-03T16:20:38.199Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"/reset","accountId":"main"}
+{"ts":"2026-04-03T16:20:59.055Z","dir":"out","channel":"feishu","to":"user:ou_7e1b464d443ace5566c4fa865b3596cb","content":"✅ New session started · model: minimax/auto","success":true,"accountId":"main"}
+{"ts":"2026-04-03T16:22:46.003Z","dir":"in","channel":"webchat","from":"","content":"/new"}
+{"ts":"2026-04-03T16:23:31.762Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"能否替换minimax-m2.7模型","accountId":"main"}
+{"ts":"2026-04-03T16:23:58.952Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"管理界面在哪","accountId":"main"}
+{"ts":"2026-04-03T16:29:49.892Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"minimax/auto，到底是啥模型","accountId":"main"}
+{"ts":"2026-04-03T16:34:33.156Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"/status","accountId":"main"}
+{"ts":"2026-04-03T16:35:01.925Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"你查一下maxlcaw背后模型怎么配置，配置m2.7的教程是？","accountId":"main"}
+{"ts":"2026-04-03T16:38:04.015Z","dir":"in","channel":"feishu","from":"feishu:ou_7e1b464d443ace5566c4fa865b3596cb","content":"如果接入code plan呢","accountId":"main"}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冲突：三个核心挑战</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#0a0f2e;color:#fff}
+  .slide{width:100vw;height:100vh;display:flex;flex-direction:column;padding:60px 80px;position:relative;overflow:hidden}
+  .tag{font-size:13px;letter-spacing:3px;color:#f59e0b;text-transform:uppercase;font-weight:600;margin-bottom:20px}
+  .slide-num{font-size:13px;color:#334155;font-weight:700;margin-bottom:20px}
+  .title{font-size:38px;font-weight:700;color:#fff;margin-bottom:44px}
+  .scqa-badge{position:absolute;top:60px;right:80px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px 18px;font-size:13px;color:#f59e0b;font-weight:600;letter-spacing:1px}
+  .challenges{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+  .card{border-radius:16px;padding:32px 28px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+  .card.red::before{background:#ef4444}
+  .card.orange::before{background:#f59e0b}
+  .card.blue::before{background:#3b82f6}
+  .card-num{font-size:48px;font-weight:800;opacity:0.15;position:absolute;top:20px;right:24px}
+  .card-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:12px;margin-top:8px}
+  .card-impact{font-size:13px;font-weight:600;color:#ef4444;margin-bottom:16px}
+  .card.orange .card-impact{color:#f59e0b}
+  .card.blue .card-impact{color:#3b82f6}
+  .card-detail{font-size:14px;color:#94a3b8;line-height:1.8}
+  .card-action{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);font-size:13px;color:#10b981;font-weight:600}
+  .footer{position:absolute;bottom:36px;left:80px;right:80px;display:flex;justify-content:space-between}
+  .footer .note{font-size:12px;color:#475569}
+  .footer .page{font-size:13px;color:#334155}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="tag">C — Complication 核心挑战</div>
+  <div class="slide-num">04 / 14</div>
+  <div class="title">Q1 我们面对的三个核心挑战</div>
+  <div class="scqa-badge">SCQA · C</div>
+  <div class="challenges">
+    <div class="card red">
+      <div class="card-num">01</div>
+      <div class="card-title">训练环境稳定性差</div>
+      <div class="card-impact">直接影响模型迭代周期</div>
+      <div class="card-detail">H800多节点训练频繁中断，NCCL通信异常、OOM问题反复出现，导致滨江项目训练效率显著下降。</div>
+      <div class="card-action">✓ 行动：环境就绪作为独立里程碑节点</div>
+    </div>
+    <div class="card orange">
+      <div class="card-num">02</div>
+      <div class="card-title">数据质量拖慢进度</div>
+      <div class="card-impact">数据返工导致训练启动延迟</div>
+      <div class="card-detail">滨江、交投等多个项目数据标签错误、分类定义不清晰，数据交接环节缺乏质量把控机制。</div>
+      <div class="card-action">✓ 行动：建立数据质量Checklist与验收标准</div>
+    </div>
+    <div class="card blue">
+      <div class="card-num">03</div>
+      <div class="card-title">国产化适配超预期</div>
+      <div class="card-impact">技术难度预判不足</div>
+      <div class="card-detail">海光、昆仑芯底层算子与NV生态存在差异，Qwen3系列在超节点环境支持尚不完善，多轮调试耗时。</div>
+      <div class="card-action">✓ 行动：前置技术调研+渐进式验证流程</div>
+    </div>
+  </div>
+  <div class="footer"><span class="note">SCQA模型 · 2026年Q1 AI模型工程团队述职</span><span class="page">04 / 14</span></div>
+</div>
+</body>
+</html>

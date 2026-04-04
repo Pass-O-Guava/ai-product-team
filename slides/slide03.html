@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>背景：团队是谁</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#0a0f2e;color:#fff}
+  .slide{width:100vw;height:100vh;display:flex;flex-direction:column;padding:60px 80px;position:relative;overflow:hidden}
+  .tag{font-size:13px;letter-spacing:3px;color:#10b981;text-transform:uppercase;font-weight:600;margin-bottom:20px}
+  .slide-num{font-size:13px;color:#334155;font-weight:700;margin-bottom:20px}
+  .title{font-size:38px;font-weight:700;color:#fff;margin-bottom:44px}
+  .layout{display:grid;grid-template-columns:1fr 1.2fr;gap:60px;align-items:center}
+  .left .section-title{font-size:20px;color:#93c5fd;font-weight:600;margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid rgba(59,130,246,0.2)}
+  .left ul{list-style:none;display:flex;flex-direction:column;gap:16px}
+  .left ul li{display:flex;align-items:flex-start;gap:14px;font-size:17px;color:#cbd5e1;line-height:1.6}
+  .left ul li .icon{width:32px;height:32px;background:rgba(16,185,129,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+  .left ul li strong{color:#fff}
+  .right{display:flex;flex-direction:column;gap:20px}
+  .track{display:flex;flex-direction:column;gap:6px}
+  .track-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+  .track-name{font-size:14px;color:#94a3b8}
+  .track-value{font-size:14px;font-weight:700;color:#3b82f6}
+  .bar-bg{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+  .footer{position:absolute;bottom:36px;left:80px;right:80px;display:flex;justify-content:space-between}
+  .footer .note{font-size:12px;color:#475569}
+  .footer .page{font-size:13px;color:#334155}
+  .scqa-badge{position:absolute;top:60px;right:80px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px 18px;font-size:13px;color:#10b981;font-weight:600;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="tag">S — Situation 我们是谁</div>
+  <div class="slide-num">03 / 14</div>
+  <div class="title">AI模型工程团队，Q1在做什么？</div>
+  <div class="scqa-badge">SCQA · S</div>
+  <div class="layout">
+    <div class="left">
+      <div class="section-title">三条核心技术主线</div>
+      <ul>
+        <li><div class="icon">🧠</div><div><strong>模型能力建设</strong><br>意图识别、规划能力、拟人化训练，覆盖8条产线业务场景</div></li>
+        <li><div class="icon">⚡</div><div><strong>基础设施优化</strong><br>缓存感知调度、国产算力适配、KV Cache卸载</div></li>
+        <li><div class="icon">🛡️</div><div><strong>技术壁垒构建</strong><br>专利布局、白皮书输出、方法论沉淀</div></li>
+      </ul>
+    </div>
+    <div class="right">
+      <div class="section-title" style="font-size:20px;color:#93c5fd;font-weight:600;margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid rgba(59,130,246,0.2)">Q1 投入分布</div>
+      <div class="track">
+        <div class="track-label"><span class="track-name">意图识别与业务落地</span><span class="track-value">~30%</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:30%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div>
+      </div>
+      <div class="track">
+        <div class="track-label"><span class="track-name">推理优化与基础设施</span><span class="track-value">~25%</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:25%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+      </div>
+      <div class="track">
+        <div class="track-label"><span class="track-name">模型规划与拟人化训练</span><span class="track-value">~25%</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:25%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div></div>
+      </div>
+      <div class="track">
+        <div class="track-label"><span class="track-name">专利、白皮书、知识沉淀</span><span class="track-value">~10%</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:10%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+      </div>
+      <div class="track">
+        <div class="track-label"><span class="track-name">NAI算法交付与问题闭环</span><span class="track-value">~10%</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:10%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="note">SCQA模型 · 2026年Q1 AI模型工程团队述职</span><span class="page">03 / 14</span></div>
+</div>
+</body>
+</html>
