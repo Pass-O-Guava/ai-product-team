@@ -1,0 +1,11 @@
+# 通用依赖（所有 Demo 适用）
+transformers>=4.40.0
+torch>=2.0.0
+accelerate>=0.25.0
+
+# 生产部署（推荐）
+# vllm>=0.4.0          # GPU 推理优化，支持多卡并行
+# ray>=2.10.0          # vLLM 依赖
+
+# 单独安装：
+# pip install vllm>=0.4.0
