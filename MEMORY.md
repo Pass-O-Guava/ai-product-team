@@ -163,10 +163,11 @@
 ## 十一、项目状态追踪
 
 ### SOTA模型仓
-- GitHub：https://github.com/Pass-O-Guava/ai-product-team
+- **独立新仓**：https://github.com/Pass-O-Guava/sota-model-hub
+- 旧仓：https://github.com/Pass-O-Guava/ai-product-team（保留备份）
 - v0.1：FAIL 5.2/10 ✅ 复盘完成
 - v0.2：FAIL 4.8/10 ✅ P0整改完成（commit b7027ea）→ P0-C核查中
-- v0.3：待交付
+- v0.3：✅ 已交付（44个模型，14个新增，独立仓）
 
 ### v0.2 P0-C 剩余待核查（8项）
 Qwen3-VL开源状态 / Kimi K2.5发布日期 / Cosmos R2许可证 / Sensenova Mars开源状态 / InternVideo Next开源状态 / Phi-4-vision Benchmark数据 / Phi-4-vision两版合并
