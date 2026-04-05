@@ -1,0 +1,62 @@
+{
+  "run_id": "078c0014-74d6-4e5b-8241-0ecf33dfa731",
+  "status": "RUNNING",
+  "started_at": "2026-04-05T18:17:28.478389",
+  "finished_at": null,
+  "progress": 0.0,
+  "steps": [
+    {
+      "step": "trigger",
+      "started_at": "2026-04-05T18:17:28.478398",
+      "finished_at": null,
+      "status": "running",
+      "message": ""
+    },
+    {
+      "step": "dispatch",
+      "started_at": null,
+      "finished_at": null,
+      "status": "pending",
+      "message": ""
+    },
+    {
+      "step": "research",
+      "started_at": null,
+      "finished_at": null,
+      "status": "pending",
+      "message": ""
+    },
+    {
+      "step": "qc_review",
+      "started_at": null,
+      "finished_at": null,
+      "status": "pending",
+      "message": ""
+    },
+    {
+      "step": "archive",
+      "started_at": null,
+      "finished_at": null,
+      "status": "pending",
+      "message": ""
+    },
+    {
+      "step": "self_review",
+      "started_at": null,
+      "finished_at": null,
+      "status": "pending",
+      "message": ""
+    },
+    {
+      "step": "complete",
+      "started_at": null,
+      "finished_at": null,
+      "status": "pending",
+      "message": ""
+    }
+  ],
+  "results": {
+    "model_ids": []
+  },
+  "errors": []
+}

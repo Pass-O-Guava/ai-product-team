@@ -1,0 +1,22 @@
+name: Auto Backup
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+      
+      - name: Commit all changes
+        run: |
+          git config user.name "SOTA Radar CI"
+          git config user.email "ci@sota-radar.ai"
+          git add -A
+          git diff --staged --quiet || git commit -m "ci: auto-backup $(date -u '+%Y-%m-%d %H:%M:%S')"
+          git push

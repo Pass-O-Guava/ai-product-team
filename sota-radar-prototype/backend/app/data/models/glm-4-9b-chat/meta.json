@@ -1,0 +1,33 @@
+{
+  "id": "glm-4-9b-chat",
+  "name": "GLM-4-9B-Chat",
+  "category": "Text",
+  "publisher": "智谱AI",
+  "params": "9B",
+  "modality": "text-only",
+  "license": "Apache 2.0",
+  "license_tag": "✅可商用",
+  "benchmarks": [
+    {
+      "name": "CMMLU",
+      "score": "~85.3%",
+      "source": "官方评测"
+    },
+    {
+      "name": "MMLU",
+      "score": "~74.6%",
+      "source": "官方评测"
+    }
+  ],
+  "hf_url": "https://huggingface.co/THUDM/GLM-4-9B-Chat",
+  "release_date": "2024-01",
+  "is_sota": false,
+  "insight": "开源9B最强中文对话基座",
+  "tags": [
+    "开源",
+    "国产",
+    "Text"
+  ],
+  "created_at": "2026-04-05T18:11:47.886751",
+  "updated_at": "2026-04-05T18:11:47.886753"
+}

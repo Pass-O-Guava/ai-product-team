@@ -1,0 +1,21 @@
+{
+  "id": "hunievideo",
+  "name": "HunieVideo",
+  "category": "Video",
+  "publisher": "字节跳动",
+  "params": "13B",
+  "modality": "video+image",
+  "license": "专有协议",
+  "license_tag": "⚠️需申请",
+  "benchmarks": [],
+  "hf_url": "",
+  "release_date": "2026-03",
+  "is_sota": false,
+  "insight": "字节跳动最强开源视频理解模型",
+  "tags": [
+    "国产",
+    "Video"
+  ],
+  "created_at": "2026-04-05T18:11:47.887109",
+  "updated_at": "2026-04-05T18:11:47.887111"
+}

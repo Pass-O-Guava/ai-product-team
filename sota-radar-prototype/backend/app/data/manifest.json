@@ -1,0 +1,65 @@
+{
+  "version": "0.1.0",
+  "models": [
+    {
+      "id": "qwen3-vl-235b-a22b",
+      "name": "Qwen3-VL-235B-A22B",
+      "category": "VLM"
+    },
+    {
+      "id": "glm-5v-turbo",
+      "name": "GLM-5V-Turbo",
+      "category": "VLM"
+    },
+    {
+      "id": "kimi-k2-5",
+      "name": "Kimi K2.5",
+      "category": "VLM"
+    },
+    {
+      "id": "qwen3-6-plus",
+      "name": "Qwen3.6-Plus",
+      "category": "VLM"
+    },
+    {
+      "id": "janus-pro-7b",
+      "name": "Janus-Pro-7B",
+      "category": "Unified"
+    },
+    {
+      "id": "qwen2-5-omni-7b",
+      "name": "Qwen2.5-Omni-7B",
+      "category": "ALM"
+    },
+    {
+      "id": "glm-4-9b-chat",
+      "name": "GLM-4-9B-Chat",
+      "category": "Text"
+    },
+    {
+      "id": "qwq-32b",
+      "name": "QWQ-32B",
+      "category": "Text"
+    },
+    {
+      "id": "glm-5-9b-0414",
+      "name": "GLM-5-9B-0414",
+      "category": "Text"
+    },
+    {
+      "id": "hunievideo",
+      "name": "HunieVideo",
+      "category": "Video"
+    },
+    {
+      "id": "cogvideox-5b",
+      "name": "CogVideoX-5B",
+      "category": "Video"
+    },
+    {
+      "id": "step-3-5-flash",
+      "name": "Step-3.5-Flash",
+      "category": "Embedding"
+    }
+  ]
+}

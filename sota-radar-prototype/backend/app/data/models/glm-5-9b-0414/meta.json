@@ -1,0 +1,33 @@
+{
+  "id": "glm-5-9b-0414",
+  "name": "GLM-5-9B-0414",
+  "category": "Text",
+  "publisher": "智谱AI",
+  "params": "9B",
+  "modality": "text-only",
+  "license": "Apache 2.0",
+  "license_tag": "✅可商用",
+  "benchmarks": [
+    {
+      "name": "CMMLU",
+      "score": "~88.2%",
+      "source": "官方评测"
+    },
+    {
+      "name": "MMLU",
+      "score": "~75.1%",
+      "source": "官方评测"
+    }
+  ],
+  "hf_url": "https://huggingface.co/THUDM/GLM-5-9B-0414",
+  "release_date": "2026-04",
+  "is_sota": true,
+  "insight": "国产开源9B基座Benchmark新标杆",
+  "tags": [
+    "开源",
+    "国产",
+    "Text"
+  ],
+  "created_at": "2026-04-05T18:11:47.886994",
+  "updated_at": "2026-04-05T18:11:47.886996"
+}

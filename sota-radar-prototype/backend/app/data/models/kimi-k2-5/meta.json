@@ -1,0 +1,27 @@
+{
+  "id": "kimi-k2-5",
+  "name": "Kimi K2.5",
+  "category": "VLM",
+  "publisher": "月之暗面",
+  "params": "200B+",
+  "modality": "text+image+video",
+  "license": "专有协议",
+  "license_tag": "⚠️需申请",
+  "benchmarks": [
+    {
+      "name": "MMMU",
+      "score": "~78.5%",
+      "source": "官方评测"
+    }
+  ],
+  "hf_url": "",
+  "release_date": "2026-02",
+  "is_sota": true,
+  "insight": "Kimi多模态最强版本，支持视频理解",
+  "tags": [
+    "国产",
+    "VLM"
+  ],
+  "created_at": "2026-04-05T18:11:47.886245",
+  "updated_at": "2026-04-05T18:11:47.886248"
+}
