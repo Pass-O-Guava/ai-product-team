@@ -1,87 +1,38 @@
-# NVIDIA Cosmos Reason 2 — 物理 AI 推理视觉语言模型
+# Cosmos-Reason2（Cosmos R2）
 
-> **调研员**: @video-researcher  
-> **产出日期**: 2026-04-04  
-> **信息源等级**: T0（HuggingFace / NVIDIA 官方）/ T1（GitHub / CES 2026 公告）
-
----
+> **数据可靠度：A**（NVIDIA 官方 GitHub + HuggingFace）
+> **调研日期**：2026-04-05
+> **注意**：此前仓库中名为"Cosmos R2"，正确名称为 **Cosmos-Reason2**
 
 ## 基本信息
 
 | 字段 | 内容 |
 |------|------|
-| **模型全称** | Cosmos Reason 2 |
-| **发布机构** | NVIDIA |
-| **发布/发现日期** | 2025-12-19（首批模型发布）/ 2026-01-05（CES 2026 正式公告） |
-| **模型类型** | 推理型视觉语言模型（Reasoning VLM），面向物理 AI / 机器人 |
-| **参数量级** | 2B / 8B 两个规格 |
-| **所在产品线** | NVIDIA Cosmos 系列（物理世界基础模型） |
-
----
-
-## 许可证
-
-- **许可类型**: NVIDIA Cosmos License（Apache 2.0 style，部分开放）
-- ✅ NVIDIA 官方称为"open, customizable"，Apache 2.0 风格开放
-- ⚠️ 需查阅 NVIDIA 官方条款确认完整商用授权范围
-
----
-
-## 链接
-
-| 类型 | 链接 |
-|------|------|
+| **模型名称** | Cosmos-Reason2 |
+| **发布方** | NVIDIA |
+| **参数量级** | 2B / 8B / 72B 三种规格 |
+| **支持的模态** | 物理 AI 视觉推理（VLM for Robotics） |
+| **许可协议** | NVIDIA Open Model License |
 | **GitHub** | https://github.com/nvidia-cosmos/cosmos-reason2 |
-| **HuggingFace** | https://huggingface.co/nvidia/cosmos-reason2-8B |
-| **NVIDIA NIM** | https://build.nvidia.com/nvidia/cosmos-reason2-8b/modelcard |
-| **官方博客** | https://huggingface.co/blog/nvidia/nvidia-cosmos-reason-2-brings-advanced-reasoning |
-| **CES 2026 公告** | https://forums.developer.nvidia.com/t/nvidia-cosmos-announcements-at-ces-2026/356629 |
-| **Datature 微调教程** | https://datature.com/blog/finetuning-your-own-cosmos-reason2-model |
+| **发布日期** | **2025-12-19** |
+| **相关发布** | 2026-01-05 NVIDIA 发布新版 Cosmos 模型家族 |
 
----
+## 核心能力
 
-## Benchmark / SOTA 声明（有据可查）
+- **物理 AI 推理**：专为机器人学和物理 AI 设计，理解物理常识和空间推理
+- **Embodied Reasoning**：支持具身智能（Embodied AI）场景的视觉理解和推理
+- **开源可定制**：NVIDIA Cosmos-Reason2 是开源可定制模型
+- **多规格**：2B（轻量）、8B（均衡）、72B（高性能）
 
-| Benchmark | 成绩 | 来源 | 备注 |
-|-----------|------|------|------|
-| **Physical AI Leaderboard** | **Top #1** | NVIDIA CES 2026，2026-01-06 | 物理 AI 推理榜单第一 |
-| Physical Common Sense | Leaderboard Topping | NVIDIA 博客，2026-01 | 物理常识推理最强 |
-| Embodied Reasoning | SOTA | NVIDIA GitHub，2025-12 | 机器人/具身推理 |
-| Robomimic / CALVIN | 领先 | NVIDIA 官方，2026-01 | 机器人操作基准 |
-| Open-source Physical AI VLM | #1 | HuggingFace NIM，2026-01 | 开源物理 AI VLM 第一 |
+## 许可证与商用合规
 
-> ✅ **SOTA 声明**: NVIDIA CES 2026 官方公告确认"topping the Physical AI leaderboard"；HuggingFace NIM 页面标题即为"leaderboard-topping reasoning VLM"。有官方来源支撑，声明有效。
-
----
-
-## 技术亮点
-
-1. **Chain-of-Thought 推理**：内置推理 token，逐 token 思考物理交互逻辑，适合机器人规划
-2. **物理世界常识理解**：对物体重量、碰撞、运动轨迹、材质等物理属性有强理解能力
-3. **双规格开放**：2B（边缘高效部署）+ 8B（最强推理能力）
-4. **物理 AI 生态**：专为机器人、具身智能、自动驾驶等物理世界 AI 场景设计
-5. **视频时间戳精确感知**：支持事件时间戳精准定位，适合长视频时序推理
-6. **微调友好**：Datature 等平台已提供微调教程，支持定制化物理推理场景
-
----
+⚠️ **需确认许可证类型**（NVIDIA Open Model License），建议单独核实商业使用条款
 
 ## 入选理由
 
-1. **官方 SOTA 认证**：NVIDIA 明确声称"Leaderboard-topping"，Physical AI 榜单第一
-2. **视频时间推理专长**：时序理解+物理推理双重能力，切中长视频理解重点方向
-3. **生态完善**：GitHub / HuggingFace / NIM 多平台同步，Apache 2.0 风格许可证
-4. **调研窗口合规**：2025-12-19 发布，距今约 4 个月，在半年窗口内
-5. **机器人+视频双赛道**：同时覆盖实时视频分析（机器人视觉）和长视频理解两个重点
+NVIDIA 针对物理 AI 领域发布的开源推理模型，代表了视频/视觉推理在机器人学应用的前沿方向，是具身智能场景的重要基础设施模型。
 
----
+## 信息源
 
-## 信息源列表
-
-| # | 来源 | 类型 | 可信度 | 链接 |
-|---|------|------|--------|------|
-| 1 | NVIDIA Cosmos Reason 2 GitHub | T0 | ★★★★★ | https://github.com/nvidia-cosmos/cosmos-reason2 |
-| 2 | HuggingFace NIM 模型卡 | T0 | ★★★★★ | https://build.nvidia.com/nvidia/cosmos-reason2-8b/modelcard |
-| 3 | HuggingFace 官方博客 | T0 | ★★★★★ | https://huggingface.co/blog/nvidia/nvidia-cosmos-reason-2-brings-advanced-reasoning |
-| 4 | NVIDIA CES 2026 公告 | T1 | ★★★★★ | https://forums.developer.nvidia.com/t/nvidia-cosmos-announcements-at-ces-2026/356629 |
-| 5 | NVIDIA 官方文档 | T1 | ★★★★ | https://docs.nvidia.com/cosmos/latest/reason2/index.html |
-| 6 | Datature 微调指南 | T2 | ★★★ | https://datature.com/blog/finetuning-your-own-cosmos-reason2-model |
+- NVIDIA 官方 GitHub：https://github.com/nvidia-cosmos/cosmos-reason2
+- NVIDIA 新闻：https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Releases-New-Physical-AI-Models-as-Global-Partners-Unveil-Next-Generation-Robots/

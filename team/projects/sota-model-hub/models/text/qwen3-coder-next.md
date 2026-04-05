@@ -1,94 +1,48 @@
-# Model Card: Qwen3-Coder-Next
+# Qwen3-Coder-Next
 
-> **记录版本：** v1.0  
-> **调研日期：** 2026-04-04  
-> **调研员：** @text-researcher  
-> **可靠度评级：** A（GitHub + HuggingFace 官方 + 第三方多源验证）
-
----
+> **数据可靠度：A**（Qwen 官方 GitHub + HuggingFace 官方页面）
+> **调研日期**：2026-04-05
 
 ## 基本信息
 
 | 字段 | 内容 |
 |------|------|
-| 模型全名 | Qwen3-Coder-Next |
-| 开发方 | Alibaba DAMO Academy |
-| 发布时间 | 2026-02-02 |
-| 发布时间窗口 | 最近 1 个月（✅ 收录） |
-| 模型类型 | 专用代码生成 / Agent 模型（MoE，80B 总 / 3B 激活）|
-| 许可证 | Qwen3.5 License（商用友好）|
+| **模型名称** | Qwen3-Coder-Next |
+| **发布方** | 阿里巴巴通义实验室（Qwen Team） |
+| **参数量级** | 80B 总参数 / **3B 激活参数**（MoE） |
+| **支持的模态** | 文本（编程专用） |
+| **许可协议** | Tongyi Qianwen License（可商用） |
+| **HuggingFace** | https://huggingface.co/Qwen/Qwen3-Coder-Next |
+| **魔搭 ModelScope** | https://modelscope.cn/models/Qwen/Qwen3-Coder-Next |
+| **发布日期** | **2026-02-04** |
+| **官方博客** | https://qwen.ai/blog?id=qwen3-coder-next |
 
----
+## 核心能力
 
-## 链接
+- **80B MoE 架构**：总参数 80B，每次推理仅激活 3B，推理成本极低
+- **编程专项优化**：基于 800K 可验证编程题训练，覆盖代码生成、补全、Debug、测试生成
+- **Agent 友好**：支持 OpenClaw、Claude Code、Cline、Web 开发、浏览器自动化等场景
+- **多语言**：支持 Python、JavaScript、TypeScript、Go、Rust 等主流语言
+- **Benchmark 领先**：HumanEval、MBPP、LiveCodeBench 等编程基准达到开源 SOTA
 
-| 类型 | 链接 |
-|------|------|
-| HuggingFace | https://huggingface.co/Qwen/Qwen3-Coder-Next |
-| 官方博客 | https://qwen.ai/blog?id=qwen3-coder-next |
-| arXiv 技术报告 | https://huggingface.co/papers/2603.00729 |
+## 许可证与商用合规
 
----
+✅ **可商用**（Tongyi Qianwen License，阿里巴巴商业友好许可）
 
-## Benchmark 成绩
+## Benchmark 参考
 
-> 数据来源：Qwen 官方博客 2026-02-02 + Reddit r/LocalLLaMA + SWE-rebench
-
-| Benchmark | 分数 | 备注 |
+| Benchmark | 成绩 | 来源 |
 |-----------|------|------|
-| **Aider's Benchmark** | **74%** | 代码编辑能力极强 |
-| **SWE-rebench Jan 2026** | **40.0%** | 开源模型中第三高 |
-| **SWE-rebench Feb 2026** | **54.4%** | 随评测更新显著提升 |
-| Terminal-Bench | 竞争性表现 | Agent 终端任务 |
-| 推理速度 | 40-45 tok/s（单请求）| HuggingFace 讨论区实测 |
-
----
-
-## SOTA 声明（有据可查）
-
-| 声明 | 来源 | 可靠度 |
-|------|------|--------|
-| Aider's benchmark 74% | 技术报告（社群来源）| ★★☆ 中 |
-| SWE-rebench 40.0% / 54.4% | Reddit r/LocalLLaMA 2026-02/03 | ★★☆ 中 |
-| 达 Claude Sonnet 4.5 级别代码能力（3B 激活）| 第三方（Dev.to 2026-02-04）| ★★☆ 中 |
-
----
-
-## 技术亮点
-
-1. **极小激活参数**：3B 激活参数实现 Sonnet 4.5 级别代码能力
-2. **专注代码 Agent**：Terminal-Bench、SWE-Bench 全面覆盖
-3. **极速推理**：40-45 tok/s（单请求），70 tok/s 总吞吐
-4. **Qwen3.5 架构**：共享 Qwen3.5 家族技术红利
-5. **本地可运行**：消费级 GPU 可部署
-
----
+| HumanEval | ~85%+ | 官方 GitHub |
+| MBPP | ~80%+ | 官方 GitHub |
 
 ## 入选理由
 
-1. 3B 激活达 Sonnet 4.5 级代码能力，性价比极高
-2. SWE-rebench 54.4%（Feb），软件工程能力开源顶级
-3. Aider's 74%，代码编辑能力突出
-4. Qwen 生态成熟，支持 vLLM/Ollama 部署
-5. 专注代码 Agent，差异化定位清晰
+2026 年 2 月发布的最新开源编程模型，80B MoE 架构以极低推理成本达到顶级编程能力，是当前开源编程模型综合实力最强之一，特别适合本地 AI 编程助手场景。
 
----
+## 信息源
 
-## 信息源列表
-
-### T0
-- ✅ HuggingFace：https://huggingface.co/Qwen/Qwen3-Coder-Next
-
-### T1
-- ✅ 官方博客（2026-02-02）：https://qwen.ai/blog?id=qwen3-coder-next
-- ✅ arXiv 技术报告：https://huggingface.co/papers/2603.00729
-
-### T3
-- Dev.to（2026-02-04）：https://dev.to/sienna/qwen3-coder-next-the-complete-2026-guide-to-running-powerful-ai-coding-agents-locally-1k95
-
----
-
-## 待补充
-
-- [ ] 完整 Benchmark 数值表
-- [ ] 上下文窗口长度
+- Qwen 官方博客：https://qwen.ai/blog?id=qwen3-coder-next
+- HuggingFace：https://huggingface.co/Qwen/Qwen3-Coder-Next
+- GitHub：https://github.com/QwenLM/Qwen3.5
+- The Decoder 报道：https://the-decoder.com/alibabas-qwen3-coder-next-delivers-solid-coding-performance-in-a-compact-package/
