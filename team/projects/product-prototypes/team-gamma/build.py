@@ -1,0 +1,225 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+html = """<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModelPilot AI 模型顾问</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#080b14;--bg2:#0d1120;--bg3:#121726;--border:rgba(99,102,241,0.18);--border2:rgba(99,102,241,0.35);--accent:#6366f1;--accent2:#818cf8;--accent3:#a78bfa;--cyan:#22d3ee;--green:#34d399;--amber:#fbbf24;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.header{padding:14px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(8,11,20,0.95);backdrop-filter:blur(20px);flex-shrink:0;z-index:10;position:relative}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#22d3ee);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(99,102,241,0.4)}
+.brand{display:flex;flex-direction:column}
+.brand-name{font-size:18px;font-weight:800;background:linear-gradient(90deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.3px}
+.brand-tag{font-size:11px;color:var(--text3);font-weight:500}
+.header-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(34,211,238,0.08));border:1px solid var(--border2);border-radius:50px;padding:6px 16px}
+.header-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--accent2);font-weight:600}
+.pulse-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.4)}}
+.header-right{display:flex;align-items:center;gap:12px}
+.stat-pill{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--text2)}
+.stat-pill .num{color:var(--cyan);font-weight:700}
+.main{flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.wizard-panel{padding:16px 22px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--border);overflow-y:auto}
+.wizard-panel::-webkit-scrollbar{width:4px}.wizard-panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.panel-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin-bottom:2px}
+.step-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:13px 15px;transition:all 0.3s;position:relative;overflow:hidden}
+.step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);opacity:0;transition:opacity 0.3s}
+.step-card.active::before{opacity:1}
+.step-card.active{border-color:var(--border2);box-shadow:0 0 30px rgba(99,102,241,0.06)}
+.step-header{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.step-num{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;transition:background 0.3s}
+.step-num.done{background:var(--green)}
+.step-label{font-size:13px;font-weight:700;color:var(--text)}
+.step-sublabel{font-size:10px;color:var(--text3);margin-left:auto}
+.tag-grid{display:flex;flex-wrap:wrap;gap:5px}
+.tag-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;transition:all 0.2s;user-select:none}
+.tag-btn:hover{border-color:var(--accent);color:var(--accent2);background:rgba(99,102,241,0.08)}
+.tag-btn.selected{border-color:var(--accent);background:rgba(99,102,241,0.15);color:var(--accent3);box-shadow:0 0 12px rgba(99,102,241,0.2)}
+.tag-btn .tag-icon{font-size:12px}
+.radio-pills{display:flex;gap:7px}
+.radio-pill{flex:1;text-align:center;padding:8px 6px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;transition:all 0.2s;user-select:none}
+.radio-pill:hover{border-color:var(--accent)}
+.radio-pill.selected{border-color:var(--accent);background:rgba(99,102,241,0.15)}
+.radio-pill .pill-label{font-size:12px;font-weight:700;color:var(--text);display:block}
+.radio-pill.selected .pill-label{color:var(--accent3)}
+.radio-pill .pill-sub{font-size:9px;color:var(--text3);display:block;margin-top:2px}
+.radio-pill.selected .pill-sub{color:var(--accent2)}
+.wizard-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin:1px 0}
+.go-btn-wrap{display:flex;justify-content:center;padding:2px 0}
+.go-btn{width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 20px rgba(99,102,241,0.35);display:flex;align-items:center;justify-content:center;gap:8px}
+.go-btn:hover{transform:translateY(-1px);box-shadow:0 6px 30px rgba(99,102,241,0.5)}
+.go-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.go-btn .arrow{font-size:16px;transition:transform 0.3s;display:inline-block}
+.go-btn:hover .arrow{transform:translateX(3px)}
+.progress-bar-wrap{display:flex;align-items:center;gap:6px;margin-top:2px}
+.progress-track{flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.8s ease-out;background:linear-gradient(90deg,var(--accent),var(--cyan))}
+.results-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--bg2)}
+.results-header{padding:11px 16px 9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.results-header-left{display:flex;align-items:center;gap:8px}
+.results-title{font-size:13px;font-weight:700;color:var(--text)}
+.results-count{background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center}
+.results-meta{font-size:10px;color:var(--text3)}
+.results-scroll{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:9px}
+.results-scroll::-webkit-scrollbar{width:4px}.results-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.model-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;transition:all 0.3s;animation:slideIn 0.4s ease-out;position:relative;overflow:hidden}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.model-card:hover{border-color:var(--border2);box-shadow:0 0 25px rgba(99,102,241,0.08)}
+.model-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px}
+.model-card-left{display:flex;align-items:center;gap:9px}
+.model-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.model-info .model-name{font-size:13px;font-weight:700;color:var(--text)}
+.model-info .model-org{font-size:10px;color:var(--text3);margin-top:1px}
+.model-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.model-tag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.3px}
+.tag-green{background:rgba(52,211,153,0.12);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
+.tag-blue{background:rgba(99,102,241,0.12);color:var(--accent2);border:1px solid rgba(99,102,241,0.2)}
+.tag-amber{background:rgba(251,191,36,0.12);color:var(--amber);border:1px solid rgba(251,191,36,0.2)}
+.tag-cyan{background:rgba(34,211,238,0.12);color:var(--cyan);border:1px solid rgba(34,211,238,0.2)}
+.model-match{text-align:right;flex-shrink:0}
+.match-score{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.match-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+.model-bench{display:flex;gap:6px;margin:5px 0;flex-wrap:wrap}
+.bench-item{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.03);border-radius:6px;padding:3px 7px;font-size:10px;color:var(--text2)}
+.bench-item .bn{color:var(--text3)}
+.bench-item .bv{font-weight:700;color:var(--cyan)}
+.code-block{background:rgba(0,0,0,0.4);border:1px solid rgba(99,102,241,0.15);border-radius:8px;margin-top:8px;overflow:hidden}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(99,102,241,0.1)}
+.code-lang{font-size:10px;font-weight:600;color:var(--accent3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:5px}
+.copy-btn{padding:3px 9px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.25);border-radius:5px;color:var(--accent2);font-size:10px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+.copy-btn:hover{background:rgba(99,102,241,0.25)}
+.copy-btn.copied{background:rgba(52,211,153,0.15);border-color:rgba(52,211,153,0.3);color:var(--green)}
+.code-content{padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.6;color:#c4cfd8;white-space:pre;overflow-x:auto}
+.code-content .kw{color:#c792ea}.code-content .str{color:#c3e88d}.code-content .fn{color:#82aaff}.code-content .cm{color:#546e7a;font-style:italic}.code-content .nb{color:#f78c6c}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text3);padding:20px;text-align:center}
+.empty-icon{font-size:40px;opacity:0.3}.empty-title{font-size:14px;font-weight:600;color:var(--text2)}.empty-desc{font-size:11px;color:var(--text3);line-height:1.6;max-width:220px}
+.bg-glow{position:fixed;width:600px;height:600px;border-radius:50%;pointer-events:none;z-index:0}
+.bg-glow-1{top:-200px;left:-200px;background:radial-gradient(circle,rgba(99,102,241,0.08) 0%,transparent 70%)}
+.bg-glow-2{bottom:-200px;right:-200px;background:radial-gradient(circle,rgba(34,211,238,0.06) 0%,transparent 70%)}
+.model-card:nth-child(1){animation-delay:0ms}.model-card:nth-child(2){animation-delay:80ms}.model-card:nth-child(3){animation-delay:160ms}.model-card:nth-child(4){animation-delay:240ms}
+.cta-strip{padding:9px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg);flex-shrink:0}
+.cta-left{font-size:11px;color:var(--text3)}
+.cta-left span{color:var(--accent2);font-weight:700}
+</style>
+</head>
+<body>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+<header class="header">
+  <div class="header-left">
+    <div class="logo-icon">&#10022;</div>
+    <div class="brand"><div class="brand-name">ModelPilot</div><div class="brand-tag">AI 模型顾问</div></div>
+  </div>
+  <div class="header-center">
+    <div class="pulse-dot"></div>
+    <div class="header-badge">5分钟搞定 AI 模型选型</div>
+  </div>
+  <div class="header-right">
+    <div class="stat-pill"><span class="num">35+</span> 模型</div>
+    <div class="stat-pill"><span class="num">SOTA</span> 实时评测</div>
+    <div class="stat-pill"><span class="num">免费</span> 推荐</div>
+  </div>
+</header>
+<div class="main">
+  <div class="wizard-panel">
+    <div class="panel-title">&#127919; 选型向导</div>
+    <div class="step-card active" id="step1">
+      <div class="step-header">
+        <div class="step-num" id="sn1">1</div>
+        <div class="step-label">你要做什么？</div>
+        <div class="step-sublabel" id="sel1">可多选</div>
+      </div>
+      <div class="tag-grid" id="tags1">
+        <div class="tag-btn" data-val="customer_service"><span class="tag-icon">&#127925;</span>智能客服</div>
+        <div class="tag-btn" data-val="writing"><span class="tag-icon">&#9998;</span>内容文案</div>
+        <div class="tag-btn" data-val="data_analysis"><span class="tag-icon">&#128202;</span>数据分析</div>
+        <div class="tag-btn" data-val="image"><span class="tag-icon">&#128444;</span>图像理解</div>
+        <div class="tag-btn" data-val="video"><span class="tag-icon">&#127916;</span>视频理解</div>
+        <div class="tag-btn" data-val="code"><span class="tag-icon">&#128187;</span>代码生成</div>
+        <div class="tag-btn" data-val="reasoning"><span class="tag-icon">&#129504;</span>复杂推理</div>
+        <div class="tag-btn" data-val="long_context"><span class="tag-icon">&#128196;</span>长文档处理</div>
+        <div class="tag-btn" data-val="audio"><span class="tag-icon">&#127908;</span>语音/音频</div>
+        <div class="tag-btn" data-val="multimodal"><span class="tag-icon">&#128128;</span>多模态融合</div>
+        <div class="tag-btn" data-val="ocr"><span class="tag-icon">&#128221;</span>OCR识别</div>
+        <div class="tag-btn" data-val="embedding"><span class="tag-icon">&#128227;</span>向量嵌入</div>
+      </div>
+    </div>
+    <div class="wizard-divider"></div>
+    <div class="step-card" id="step2">
+      <div class="step-header">
+        <div class="step-num" id="sn2">2</div>
+        <div class="step-label">准确率要求？</div>
+        <div class="step-sublabel" id="sel2">单选</div>
+      </div>
+      <div class="radio-pills" id="accuracyPills">
+        <div class="radio-pill" data-val="high"><span class="pill-label">&#128300; 最高</span><span class="pill-sub">不计成本</span></div>
+        <div class="radio-pill" data-val="medium"><span class="pill-label">&#9878; 均衡</span><span class="pill-sub">性能与成本平衡</span></div>
+        <div class="radio-pill" data-val="low"><span class="pill-label">&#128640; 够用</span><span class="pill-sub">快速响应优先</span></div>
+      </div>
+    </div>
+    <div class="wizard-divider"></div>
+    <div class="step-card" id="step3">
+      <div class="step-header">
+        <div class="step-num" id="sn3">3</div>
+        <div class="step-label">你的预算？</div>
+        <div class="step-sublabel" id="sel3">单选</div>
+      </div>
+      <div class="radio-pills" id="budgetPills">
+        <div class="radio-pill" data-val="free"><span class="pill-label">&#127793; 完全免费</span><span class="pill-sub">开源可本地部署</span></div>
+        <div class="radio-pill" data-val="cheap"><span class="pill-label">&#128176; 低成本</span><span class="pill-sub">API按量付费</span></div>
+        <div class="radio-pill" data-val="unlimited"><span class="pill-label">&#128142; 不限预算</span><span class="pill-sub">追求最佳效果</span></div>
+      </div>
+    </div>
+    <div class="wizard-divider"></div>
+    <div class="go-btn-wrap">
+      <button class="go-btn" id="goBtn" disabled onclick="runRecommendation()">
+        <span>&#128640;</span><span id="goBtnText">完成以上选择 开始选型</span><span class="arrow">&#8594;</span>
+      </button>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span id="progressPct" style="font-size:10px;color:var(--text3);min-width:30px">0%</span>
+    </div>
+  </div>
+  <div class="results-panel">
+    <div class="results-header">
+      <div class="results-header-left">
+        <div class="results-title">&#128161; 推荐结果</div>
+        <div class="results-count" id="resultCount">0</div>
+      </div>
+      <div class="results-meta" id="resultsMeta">请先完成左侧选型</div>
+    </div>
+    <div class="results-scroll" id="resultsScroll">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">&#128308;</div>
+        <div class="empty-title">还没有推荐</div>
+        <div class="empty-desc">完成左侧三步选择后，ModelPilot 将为你智能匹配最合适的 AI 模型</div>
+      </div>
+    </div>
+    <div class="cta-strip">
+      <div class="cta-left">数据来源：<span>SOTA模型仓</span> &middot; 实时更新</div>
+      <div style="font-size:11px;color:var(--text3)">Powered by 星火智能</div>
+    </div>
+  </div>
+</div>
+<script>
+var MODELS=[
+{id:"deepseek-r1",name:"DeepSeek-R1",org:"深度求索 DeepSeek",params:"671B MoE（活跃37B）",icon:"&#129504;",iconBg:"linear-gradient(135deg,#6366f1,#818cf8)",tags:[{l:"推理SOTA",c:"tag-green"},{l:"强化学习",c:"tag-blue"},{l:"开源",c:"tag-amber"}],benches:[{n:"AIME",v:"86%"},{n:"MATH-500",v:"97%"},{n:"MMLU",v:"90%"}],cats:["reasoning","code","data_analysis"],acc:["high"],bud:["free","cheap","unlimited"],score:{high:98,medium:90,low:75},code:'<span class="cm"># pip install openai</span>\n<span class="kw">from</span> <span class="fn">openai</span> <span class="kw">import</span> OpenAI\nclient = OpenAI(api_key=<span class="str">"your-key"</span>, base_url=<span class="str">"https://api.deepseek.com"</span>)\nresp = client.chat.completions.create(model=<span class="str">"deepseek-reasoner"</span>,\n  messages=[{<span class="str">"role"</span>:<span class="str">"user"</span>,<span class="str">"content"</span>:<span class="str">"请推导这道数学题..."</span>}])\n<span class="kw">print</span>(resp.choices[<span class="nb">0</span>].message.reasoning)',lang:"Python · DeepSeek API"},
+{id:"deepseek-v3",name:"DeepSeek-V3",org:"深度求索 DeepSeek",params:"671B MoE（活跃37B）",icon:"&#9889;",iconBg:"linear-gradient(135deg,#4f46e5,#6366f1)",tags:[{l:"MoE高效",c:"tag-green"},{l:"极低成本",c:"tag-cyan"},{l:"开源",c:"tag-amber"}],benches:[{n:"MMLU",v:"88%"},{n:"HumanEval",v:"90%"}],cats:["writing","code","long_context","customer_service"],acc:["high","medium"],bud:["free","cheap"],score:{high:94,medium:92,low:70},code:'<span class="cm"># pip install openai</span>\n<span class="kw">from</span> <span class="fn">openai</span> <span class="kw">import</span> OpenAI\nclient = OpenAI(api_key=<span class="str">"your-key"</span>, base_url=<span class="str">"https://api.deepseek.com"</span>)\nresp = client.chat.completions.create(model=<span class="str">"deepseek-chat"</span>,\n  messages=[{<span class="str">"role"</span>:<span class="str">"user"</span>,<span class="str">"content"</span>:<span class="str">"帮我写一封商务邮件..."</span>}])\n<span class="kw">print</span>(resp.choices[<span class="nb">0</span>].message.content)',lang:"Python · DeepSeek API"},
+{id:"qwen25-72b",name:"Qwen2.5-72B",org:"阿里巴巴通义实验室",params:"72B（7种规格）",icon:"&#127984;",iconBg:"linear-gradient(135deg,#f59e0b,#fbbf24)",tags:[{l:"128K上下文",c:"tag-cyan"},{l:"开源",c:"tag-amber"},{l:"中文领先",c:"tag-green"}],benches:[{n:"MMLU",v:"86%"},{n:"GSM8K",v:"95%"}],cats:["writing","customer_service","code","long_context"],acc:["high","medium"],bud:["free","cheap"],score:{high:92,medium:90,low:85},code:'<span class="cm"># pip install transformers accelerate</span>\n<span class="kw">from</span> <span class="fn">transformers</span> <span class="kw">import</span> AutoModelForCausalLM, AutoTokenizer\nmodel = AutoModelForCausalLM.from_pretrained(<span class="str">"Qwen/Qwen2.5-72B-Instruct"</span>, device_map=<span class="str">"auto"</span>)\ntok = AutoTokenizer.from_pretrained(<span class="str">"Qwen/Qwen2.5-72B-Instruct"</span>)\nmsgs = [{<span class="str">"role"</span>:<span class="str">"user"</span>,<span class="str">"content"</span>:<span class="str">"总结这份长文档"</span>}]\n<span class="kw">print</span>(model.generate(**tok(msgs, return_tensors=<span class="str">"pt"</span>)))',lang:"Python · HuggingFace"},
+{id:"minicpm-v45",name:"MiniCPM-V 4.5",org:"面壁智能 / 清华大学",params:"8B（端侧友好）",icon:"&#128024;",iconBg:"linear-gradient(135deg,#10b981,#34d399)",tags:[{l:"Nature论文",c:"tag-green"},{l:"中文OCR强",c:"tag-cyan"},{l:"端侧可运行",c:"tag-amber"}],benches:[{n:"MMMU",v:"~59%"},{n:"OCRBench",v:"开源领先"}],cats:["image","ocr","multimodal"],acc:["high","medium"],bud:["free","cheap"],score:{high:90,medium:88,low:82},code:'<span class="cm"># pip install transformers accelerate</span>\n<span class="kw">from</span> <span class="fn">transformers</span> <span class="kw">import</span> AutoModelForCausalLM\n<span class="kw">from</span> PIL <span class="kw">import</span> Image\nmodel = AutoModelForCausalLM.from_pretrained(<span class="str">"openbmb/MiniCPM-V-4_5"</span>, device_map=<span class="str">"auto"</span>)\nimg = Image.open(<span class="str">"invoice.png"</span>).convert(<span class="str">"RGB"</span>)\n<span class="kw">print</span>(model.chat(tokenizer=None, images=img, msgs=<span class="nb">0</span>))',lang:"Python · HuggingFace"},
+{id:"qwen25-vl72",name:"Qwen2.5-VL-72B",org:"阿里巴巴通义实验室",params:"72B（视频专家）",icon:"&#127916;",iconBg:"linear-gradient(135deg,#8b5cf6,#a78bfa)",tags:[{l:"小时级视频",c:"tag-blue"},{l:"超长视频",c:"tag-cyan"},{l:"多语言",c:"tag-green"}],benches:[{n:"MMMU",v:"68%"},{n:"Video-MME",v:"SOTA"}],cats:["video","image","multimodal"],acc:["high","medium"],bud:["cheap","unlimited"],score:{high:95,medium:88,low:72},code:'<span class="cm"># pip install qwen-vl-utils transformers</span>\n<span class="kw">from</span> <span class="fn">transformers</span> <span class="kw">import</span> Qwen2VLForConditionalGeneration\nmodel = Qwen2VLForConditionalGeneration.from_pretrained(<span class="str">"Qwen/Qwen2.5-VL-72B-Instruct"</span>, device_map=<span class="str">"auto"</span>)\nmsgs = [{<span class="str">"role"</span>:<span class="str">"user"</span>,<span class="str">"content"</span>:[{<span class="str">"type"</span>:<span class="str">"video"</span>,<span class="str">"video"</span>:<span class="str">"clip.mp4"</span>},{<span class="str">"type"</span>:<span class="str">"text"</span>,<span class="str">"text"</span>:<span class="str">"视频里发生了什么？"</span>}]}]\n<span class="kw">print</span>(model.generate(**processor(msgs)))',lang:"Python · HuggingFace"},
+{id:"llava-ov",name:"LLaVA-OneVision-1.5",org:"微软 & UW-Madison",params:"4B/8B（民主化）",icon:"&#128128;",iconBg:"linear-gradient(135deg,#0891b2,#22d3ee)",tags:[{l:"全开源",c:"tag-amber"},{l:"多图/视频",c:"tag-blue"},{l:"低成本",c:"tag-green"}],benches:[{n:"MMMU",v:"61%"},{n:"Video-MME",v:"开源领先"}],cats:["image","video","multimodal","ocr"],acc:["medium","low"],bud:["free"],score:{high:80,medium:86,low:88},code:'<span class="cm"># pip install transformers bitsandbytes</span>\n<span class="kw">from</span> <span class="fn">transformers</span> <span class="kw">import</span> AutoModelForCausalLM\n<span class="kw">from</span> PIL <span class="kw">import</span> Image\nmodel = AutoModelForCausalLM.from_pretrained(<span class="str">"lmms-lab/LLaVA-OneVision-1.5-8B-Instruct"</span>, device_map=<span class="str">"auto"</span>)\nimgs = [Image.open(<span class="str">"doc1.png"</span>), Image.open(<span class="str">"doc2.png"</span>)]\n<span class="kw">print</span>(model.chat(<span class="str">"对比这两份文档的差异"</span>, imgs))',lang:"Python · HuggingFace"},
+{id:"gemma3-27b",name:"Gemma 3-27B",org:"Google DeepMind",params:"27B（单GPU可跑）",icon:"&#128142;",iconBg:"linear-gradient(135deg,#6366f1,#ec4899)",tags:[{l:"140+语言",c:"tag-cyan"},{l:"128K上下文",c:"tag-blue"},{l:"Gemini技术",c:"tag-amber"}],benches:[{n:"MMLU",v:"87%"}],cats:["writing","multimodal","long_context","customer_service"],acc:["high","medium"],bud:["free","cheap"],score:{high:88,medium:86,low:80},code:'<span class="cm"># pip install transformers</span>\n<span class="kw">from</span> <span class="fn">transformers</span> <span class="kw">import</span> AutoModelForCausalLM, AutoTokenizer\nmodel = AutoModelForCausalLM.from_pretrained(<span class="str">"google/gemma-3-27b-it"</span>, device_map=<span class="str">"auto"</span>)\ntok = AutoTokenizer.from_pretrained(<span class="str">"google/gemma-3-27b-it"</span>)\nmsgs = [{<span class="str">"role"</span>:<span class="str">"user"</span>,<span class="str">"content"</span>:<span class="str">"翻译这段英文为中文"</span>}]\n<span class="kw">print</span>(model.generate(**tok(msgs, return_tensors=<span class="str">"pt"</span>)))',lang:"Python · HuggingFace"}
+];
+var state={step1:[],step2:null,step3:null};
+function updateProgress(){var p=0;if(state.step1.length>0)p+=33;if(state.step2)p+=33;if(state.step3)p+=34;document.getElementById('progressFill').style.width=p+'%';document.getElementById('progressPct').textContent=p+'%'}
+function updateGoBtn(){var ready=state.step1.length>0&&state.step2&&state.step3;document.getElementById('goBtn').disabled=!ready;document.getElementById('goBtnText').textContent=ready?'开始智能选型':'完成以上选择 开始选型'}
+document.querySelectorAll('#tags1 .tag-btn').forEach(function(btn){btn.addEventListener('click',function(){var v=this.dataset.val;this.classList.toggle('selected');if(state.step

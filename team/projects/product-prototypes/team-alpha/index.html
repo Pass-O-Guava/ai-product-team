@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModelSmart - AI 模型选型顾问</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#06080f;--surface:#0d1421;--s2:#111827;--bd:rgba(255,255,255,0.07);--ac:#4f8fff;--ac2:#7c5cfc;--ac3:#00d4aa;--tx:#f0f4ff;--tx2:#8899bb;--tx3:#4a5a7a;--gl:rgba(255,255,255,0.04)}
+body{font-family:"Noto Sans SC",Inter,-apple-system,sans-serif;background:var(--bg);color:var(--tx);height:100vh;overflow:hidden;position:relative}
+.orb{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.orb::before{content:"";position:absolute;width:700px;height:700px;top:-250px;left:-150px;background:radial-gradient(circle,rgba(79,143,255,0.07) 0%,transparent 70%);animation:of1 14s ease-in-out infinite alternate}
+.orb::after{content:"";position:absolute;width:550px;height:550px;bottom:-200px;right:-100px;background:radial-gradient(circle,rgba(124,92,252,0.06) 0%,transparent 70%);animation:of2 18s ease-in-out infinite alternate-reverse}
+.orb2{position:absolute;width:400px;height:400px;top:50%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(0,212,170,0.04) 0%,transparent 70%);animation:of3 22s ease-in-out infinite}
+@keyframes of1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(50px,35px) scale(1.12)}}
+@keyframes of2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-40px,30px) scale(1.1)}}
+@keyframes of3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-48%,-52%) scale(1.05)}}
+.grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(79,143,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,143,255,0.025) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%)}
+.wrap{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;max-width:1380px;margin:0 auto;padding:0 40px}
+header{padding:28px 0 0;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:14px}
+.li{width:42px;height:42px;background:linear-gradient(135deg,var(--ac),var(--ac2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 20px rgba(79,143,255,0.3);animation:fi 6s ease-in-out infinite}
+@keyframes fi{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.lt{display:flex;flex-direction:column}
+.ln{font-size:22px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,#fff 30%,rgba(255,255,255,0.55));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ls{font-size:11px;color:var(--tx3)}
+.hb{display:flex;align-items:center;gap:6px;background:rgba(79,143,255,0.08);border:1px solid rgba(79,143,255,0.2);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--ac)}
+.d{width:6px;height:6px;background:var(--ac3);border-radius:50%;animation:bl 2s ease-in-out infinite}
+@keyframes bl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.75)}}
+main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:32px}
+.hero{text-align:center;padding-top:4px}
+.hero h1{font-size:50px;font-weight:900;letter-spacing:-2px;line-height:1.2;margin-bottom:14px}
+.gt{background:linear-gradient(135deg,var(--ac),var(--ac2),var(--ac3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tl{font-size:17px;color:var(--tx2);font-weight:400}
+.tl em{color:var(--tx);font-style:normal;font-weight:500}
+.sw{position:relative;width:100%;max-width:780px;margin:0 auto}
+.sb{width:100%;background:var(--surface);border:1.5px solid var(--bd);border-radius:18px;padding:18px 22px;padding-right:130px;font-size:16px;color:var(--tx);font-family:inherit;outline:none;transition:all 0.3s ease;box-shadow:0 4px 30px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05);caret-color:var(--ac)}
+.sb::placeholder{color:var(--tx3)}
+.sb:focus{border-color:rgba(79,143,255,0.45);box-shadow:0 4px 40px rgba(79,143,255,0.12)}
+.sbtn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,var(--ac),var(--ac2));border:none;border-radius:12px;padding:10px 22px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s ease;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.sbtn:hover{transform:translateY(-50%) scale(1.04);box-shadow:0 4px 20px rgba(79,143,255,0.4)}
+.sbtn:active{transform:translateY(-50%) scale(0.97)}
+.sh{display:flex;align-items:center;gap:8px;margin-top:12px;justify-content:center;flex-wrap:wrap}
+.ht{font-size:12px;color:var(--tx3);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:20px;padding:5px 14px;cursor:pointer;transition:all 0.2s}
+.ht:hover{color:var(--tx2);border-color:rgba(255,255,255,0.15)}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cl{font-size:12px;color:var(--tx3);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.ld{width:5px;height:5px;background:var(--ac3);border-radius:50%;animation:bl 2s ease-in-out infinite}
+.cm{font-size:12px;color:var(--tx3)}
+.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.mc{background:var(--gl);border:1px solid var(--bd);border-radius:20px;padding:22px;backdrop-filter:blur(12px);transition:all 0.35s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;opacity:0;transform:translateY(18px);animation:ci 0.6s ease forwards}
+.mc:nth-child(1){animation-delay:0.1s}
+.mc:nth-child(2){animation-delay:0.25s}
+.mc:nth-child(3){animation-delay:0.4s}
+@keyframes ci{to{opacity:1;transform:translateY(0)}}
+.mc::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)}
+.mc:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,0.45)}
+.mc.blue:hover{border-color:rgba(79,143,255,0.28)}
+.mc.purple:hover{border-color:rgba(124,92,252,0.28)}
+.mc.green:hover{border-color:rgba(0,212,170,0.28)}
+.ct{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.cr{font-size:20px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cb{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.bg{font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;letter-spacing:0.3px;text-transform:uppercase}
+.bg-blue{background:rgba(79,143,255,0.12);color:var(--ac);border:1px solid rgba(79,143,255,0.2)}
+.bg-purple{background:rgba(124,92,252,0.12);color:var(--ac2);border:1px solid rgba(124,92,252,0.2)}
+.bg-green{background:rgba(0,212,170,0.12);color:var(--ac3);border:1px solid rgba(0,212,170,0.2)}
+.bg-orange{background:rgba(255,165,50,0.1);color:#ffaa30;border:1px solid rgba(255,165,50,0.2)}
+.cm2{font-size:20px;font-weight:800;letter-spacing:-0.3px;margin-bottom:3px}
+.mc.blue .cm2{color:#7ab8ff}
+.mc.purple .cm2{color:#b49aff}
+.mc.green .cm2{color:#40e8c8}
+.cp2{font-size:12px;color:var(--tx3);margin-bottom:12px;font-weight:400}
+.ca{font-size:13px;color:var(--tx2);line-height:1.65;margin-bottom:14px;min-height:44px}
+.cmg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mt{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;text-align:center}
+.mv{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.mc.blue .mv{color:var(--ac)}
+.mc.purple .mv{color:var(--ac2)}
+.mc.green .mv{color:var(--ac3)}
+.ml{font-size:10px;color:var(--tx3);margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+.cf{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cl2{font-size:11px;color:var(--tx3);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:5px 10px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;flex-shrink:0}
+.cp{font-size:11px;color:var(--tx3);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:5px 10px;font-weight:500;white-space:nowrap;flex-shrink:0}
+.cpy{background:rgba(79,143,255,0.1);border:1px solid rgba(79,143,255,0.2);border-radius:8px;padding:6px 13px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0}
+.cpy:hover{background:rgba(79,143,255,0.18);transform:scale(1.04)}
+.cpy.copied{background:rgba(0,212,170,0.12);border-color:rgba(0,212,170,0.3);color:var(--ac3)}
+footer{padding:14px 0;display:flex;align-items:center;justify-content:center;gap:16px;font-size:11px;color:var(--tx3)}
+.fd{width:3px;height:3px;background:var(--tx3);border-radius:50%}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid rgba(0,212,170,0.3);border-radius:12px;padding:12px 24px;font-size:13px;color:var(--ac3);font-weight:500;opacity:0;transition:all 0.3s ease;pointer-events:none;z-index:100;box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+</style>
+</head>
+<body>
+<div class="orb"><div class="orb2"></div></div>
+<div class="grid"></div>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="li">&#x1F9E0;</div>
+      <div class="lt">
+        <div class="ln">ModelSmart</div>
+        <div class="ls">蓝鲸科技 &middot; SOTA 模型仓</div>
+      </div>
+    </div>
+    <div class="hb"><div class="d"></div>30+ SOTA 模型实时收录</div>
+  </header>
+  <main>
+    <div class="hero">
+      <h1>AI 模型选型<br><span class="gt">从此不再猜</span></h1>
+      <p class="tl">输入你的需求 &rarr; 获得最优模型组合 + 价格估算 + 许可证分析</p>
+    </div>
+    <div class="sw">
+      <input class="sb" id="si" type="text" placeholder="我想做一个XX应用，预算XX，支持商用..." autocomplete="off">
+      <button class="sbtn" id="sb">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        智能选型
+      </button>
+    </div>
+    <div class="sh">
+<span class="ht" onclick="fh('数学推理应用，支持商用，预算充足')">🧮⁥数学推理</span><span class="ht" onclick="fh('视觉问答应用，中文为主，商用免费')">👁⁥视觉理解</span><span class="ht" onclick="fh('代码助手，支持自部署，Apache协议')">💻⁥代码开发</span><span class="ht" onclick="fh('客服机器人，中等预算，支持多轮对话')">🤖⁥多轮对话</span><span class="ht" onclick="fh('视频理解应用，高性能，支持商业化')">🎬⁥视频理解</span>
+    </div>
+    <div>
+      <div class="ch">
+        <div class="cl"><span class="ld"></span>为你精选 &middot; TOP 3 推荐</div>
+        <div class="cm" id="cm">基于 SOTA 模型仓 &middot; 2026年4月最新数据</div>
+      </div>
+      <div class="cg" id="cg"></div>
+    </div>
+  </main>
+  <footer>
+    <span>Powered by SOTA 模型仓</span><div class="fd"></div>
+    <span>蓝鲸科技</span><div class="fd"></div>
+    <span>2026 Q1 &middot; 30+ 模型收录</span>
+  </footer>
+</div>
+<div class="toast" id="toast">&#x2705; 配置已复制到剪贴板</div>
+<script>
+
+var D={d:"<div class="mc blue">
+  <div class="ct"><div class="cr">🥇</div><div class="cb"><span class="bg bg-blue">综合最强</span><span class="bg bg-orange">数学 SOTA</span></div></div>
+  <div class="cm2">GLM-5</div>
+  <div class="cp2">智谱AI · 2026年2月</div>
+  <div class="ca">AIME 2026 达 92.7%，史上最低幻觉率，数学+工程双强，通用推理旗舰</div>
+  <div class="cmg"><div class="mt"><div class="mv">92.7%</div><div class="ml">AIME 2026</div></div><div class="mt"><div class="mv">97.4%</div><div class="ml">MATH-500</div></div></div>
+  <div class="cf">
+    <span class="cl2">商业友好</span>
+    <span class="cp">API · 按量计费</span>
+    <button class="cpy" onclick="cp(this,'GLM-5|745B|92.7% AIME|MATH-500 97.4%|商业友好|智谱AI')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc purple">
+  <div class="ct"><div class="cr">🥈</div><div class="cb"><span class="bg bg-purple">推理最强</span><span class="bg bg-green">MIT 许可</span></div></div>
+  <div class="cm2">DeepSeek-R1</div>
+  <div class="cp2">DeepSeek · 2026年1月</div>
+  <div class="ca">强化学习推理 SOTA，AIME ~86%，671B MoE 稀疏架构，37B 激活参数，效率极致</div>
+  <div class="cmg"><div class="mt"><div class="mv">~86%</div><div class="ml">AIME 2024</div></div><div class="mt"><div class="mv">671B</div><div class="ml">总参数</div></div></div>
+  <div class="cf">
+    <span class="cl2">MIT 许可</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'DeepSeek-R1|671B MoE|~86% AIME|MIT|DeepSeek')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc green">
+  <div class="ct"><div class="cr">🥉</div><div class="cb"><span class="bg bg-green">Apache 2.0</span><span class="bg bg-blue">多模态</span></div></div>
+  <div class="cm2">Qwen3-VL-32B</div>
+  <div class="cp2">阿里巴巴 · 2025年10月</div>
+  <div class="ca">256K 上下文，多模态理解+数学推理，MathVista 85.5%，视频理解 SOTA，商用完全开放</div>
+  <div class="cmg"><div class="mt"><div class="mv">85.5%</div><div class="ml">MathVista</div></div><div class="mt"><div class="mv">256K</div><div class="ml">上下文</div></div></div>
+  <div class="cf">
+    <span class="cl2">Apache 2.0</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'Qwen3-VL-32B|32B|85.5% MathVista|256K上下文|Apache 2.0|阿里巴巴')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div>",m:"<div class="mc blue">
+  <div class="ct"><div class="cr">🥇</div><div class="cb"><span class="bg bg-blue">综合最强</span><span class="bg bg-orange">数学 SOTA</span></div></div>
+  <div class="cm2">GLM-5</div>
+  <div class="cp2">智谱AI · 2026年2月</div>
+  <div class="ca">AIME 2026 达 92.7%，MATH-500 97.4%，史上最低幻觉率，数学+工程双强</div>
+  <div class="cmg"><div class="mt"><div class="mv">92.7%</div><div class="ml">AIME 2026</div></div><div class="mt"><div class="mv">97.4%</div><div class="ml">MATH-500</div></div></div>
+  <div class="cf">
+    <span class="cl2">商业友好</span>
+    <span class="cp">API · 按量计费</span>
+    <button class="cpy" onclick="cp(this,'GLM-5|745B|92.7% AIME|MATH-500 97.4%|商业友好|智谱AI')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc green">
+  <div class="ct"><div class="cr">🥈</div><div class="cb"><span class="bg bg-green">高性价比</span><span class="bg bg-blue">11B激活</span></div></div>
+  <div class="cm2">Step-3.5-Flash</div>
+  <div class="cp2">StepFun · 2026年2月</div>
+  <div class="ca">IMO-AnswerBench 85.4%，稀疏 MoE 架构，11B 激活参数达前沿水平，性价比极高</div>
+  <div class="cmg"><div class="mt"><div class="mv">85.4%</div><div class="ml">IMO-Bench</div></div><div class="mt"><div class="mv">11B</div><div class="ml">激活参数</div></div></div>
+  <div class="cf">
+    <span class="cl2">待确认</span>
+    <span class="cp">API · 低成本</span>
+    <button class="cpy" onclick="cp(this,'Step-3.5-Flash|11B激活 MoE|85.4% IMO|MoE架构|StepFun')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc purple">
+  <div class="ct"><div class="cr">🥉</div><div class="cb"><span class="bg bg-purple">推理最强</span><span class="bg bg-green">MIT 许可</span></div></div>
+  <div class="cm2">DeepSeek-R1</div>
+  <div class="cp2">DeepSeek · 2026年1月</div>
+  <div class="ca">强化学习推理 SOTA，AIME ~86%，671B MoE 稀疏架构，37B 激活参数，效率极致</div>
+  <div class="cmg"><div class="mt"><div class="mv">~86%</div><div class="ml">AIME 2024</div></div><div class="mt"><div class="mv">671B</div><div class="ml">总参数</div></div></div>
+  <div class="cf">
+    <span class="cl2">MIT 许可</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'DeepSeek-R1|671B MoE|~86% AIME|MIT|DeepSeek')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div>",v:"<div class="mc blue">
+  <div class="ct"><div class="cr">🥇</div><div class="cb"><span class="bg bg-blue">VLM 最强</span><span class="bg bg-green">BSD类许可</span></div></div>
+  <div class="cm2">InternVL3.5</div>
+  <div class="cp2">上海AI Lab · 2025年8月</div>
+  <div class="ca">开源 VLM 综合最强，Cascade RL 控制幻觉，241B MoE，视频理解 SOTA，多语言支持</div>
+  <div class="cmg"><div class="mt"><div class="mv">73分</div><div class="ml">MMMU</div></div><div class="mt"><div class="mv">~97%</div><div class="ml">DocVQA</div></div></div>
+  <div class="cf">
+    <span class="cl2">BSD-3-Clause</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'InternVL3.5|241B MoE|73 MMMU|BSD类|上海AI Lab')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc green">
+  <div class="ct"><div class="cr">🥈</div><div class="cb"><span class="bg bg-green">Apache 2.0</span><span class="bg bg-blue">多模态</span></div></div>
+  <div class="cm2">Qwen3-VL-32B</div>
+  <div class="cp2">阿里巴巴 · 2025年10月</div>
+  <div class="ca">256K 上下文，多模态理解+数学推理，MathVista 85.5%，视频理解 SOTA，商用完全开放</div>
+  <div class="cmg"><div class="mt"><div class="mv">85.5%</div><div class="ml">MathVista</div></div><div class="mt"><div class="mv">256K</div><div class="ml">上下文</div></div></div>
+  <div class="cf">
+    <span class="cl2">Apache 2.0</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'Qwen3-VL-32B|32B|85.5% MathVista|Apache 2.0|阿里巴巴')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc purple">
+  <div class="ct"><div class="cr">🥉</div><div class="cb"><span class="bg bg-purple">Apache 2.0</span><span class="bg bg-green">全模态</span></div></div>
+  <div class="cm2">Gemma 4-31B</div>
+  <div class="cp2">Google · 2026年4月</div>
+  <div class="ca">Google 全面切换 Apache 2.0，全系列多模态，140+语言，128K 上下文，旗舰级性能</div>
+  <div class="cmg"><div class="mt"><div class="mv">31B</div><div class="ml">旗舰规格</div></div><div class="mt"><div class="mv">140+</div><div class="ml">语言支持</div></div></div>
+  <div class="cf">
+    <span class="cl2">Apache 2.0</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'Gemma-4-31B|31B|全模态|Apache 2.0|Google')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div>",c:"<div class="mc blue">
+  <div class="ct"><div class="cr">🥇</div><div class="cb"><span class="bg bg-blue">SWE-Bench 第一</span><span class="bg bg-orange">80.2%</span></div></div>
+  <div class="cm2">MiniMax M2.5</div>
+  <div class="cp2">MiniMax · 2026年2月</div>
+  <div class="ca">SWE-Bench 80.2% 开源最高纪录，与 Claude Opus 4.6 持平，MoE 高效架构</div>
+  <div class="cmg"><div class="mt"><div class="mv">80.2%</div><div class="ml">SWE-Bench</div></div><div class="mt"><div class="mv">MoE</div><div class="ml">架构</div></div></div>
+  <div class="cf">
+    <span class="cl2">API 商业</span>
+    <span class="cp">API · 按量计费</span>
+    <button class="cpy" onclick="cp(this,'MiniMax-M2.5|MoE|80.2% SWE-Bench|API商业|MiniMax')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc green">
+  <div class="ct"><div class="cr">🥈</div><div class="cb"><span class="bg bg-green">代码专用</span><span class="bg bg-blue">3B激活</span></div></div>
+  <div class="cm2">Qwen3-Coder-Next</div>
+  <div class="cp2">阿里巴巴 · 2026年2月</div>
+  <div class="ca">Aider s 74%，专用代码模型，3B 激活参数达 Sonnet 4.5 级别，消费级 GPU 可跑</div>
+  <div class="cmg"><div class="mt"><div class="mv">74%</div><div class="ml">Aider s</div></div><div class="mt"><div class="mv">3B</div><div class="ml">激活参数</div></div></div>
+  <div class="cf">
+    <span class="cl2">Qwen3.5 License</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'Qwen3-Coder-Next|3B激活 MoE|74% Aider|Qwen3.5 License|阿里巴巴')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc purple">
+  <div class="ct"><div class="cr">🥉</div><div class="cb"><span class="bg bg-purple">推理最强</span><span class="bg bg-green">MIT 许可</span></div></div>
+  <div class="cm2">DeepSeek-R1</div>
+  <div class="cp2">DeepSeek · 2026年1月</div>
+  <div class="ca">强化学习推理 SOTA，671B MoE 稀疏架构，37B 激活参数，代码理解+生成双强</div>
+  <div class="cmg"><div class="mt"><div class="mv">~86%</div><div class="ml">AIME 2024</div></div><div class="mt"><div class="mv">671B</div><div class="ml">总参数</div></div></div>
+  <div class="cf">
+    <span class="cl2">MIT 许可</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'DeepSeek-R1|671B MoE|~86% AIME|MIT|DeepSeek')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div>",a:"<div class="mc blue">
+  <div class="ct"><div class="cr">🥇</div><div class="cb"><span class="bg bg-blue">GDPval-AA 最强</span><span class="bg bg-orange">自进化</span></div></div>
+  <div class="cm2">MiniMax M2.7</div>
+  <div class="cp2">MiniMax · 2026年3月</div>
+  <div class="ca">GDPval-AA ELO 1495 开源最高，自进化训练，Terminal-Bench 57.0%，Agent 全能旗舰</div>
+  <div class="cmg"><div class="mt"><div class="mv">1495</div><div class="ml">GDPval ELO</div></div><div class="mt"><div class="mv">57.0%</div><div class="ml">Terminal-Bench</div></div></div>
+  <div class="cf">
+    <span class="cl2">API 商业</span>
+    <span class="cp">API · 按量计费</span>
+    <button class="cpy" onclick="cp(this,'MiniMax-M2.7|GDPval 1495|57.0% Terminal|API商业|MiniMax')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc purple">
+  <div class="ct"><div class="cr">🥈</div><div class="cb"><span class="bg bg-purple">综合最强</span><span class="bg bg-orange">56.2% Terminal</span></div></div>
+  <div class="cm2">GLM-5</div>
+  <div class="cp2">智谱AI · 2026年2月</div>
+  <div class="ca">Terminal-Bench 56.2%，史上最低幻觉率，综合 Agent 能力极强，工具调用出色</div>
+  <div class="cmg"><div class="mt"><div class="mv">56.2%</div><div class="ml">Terminal-Bench</div></div><div class="mt"><div class="mv">92.7%</div><div class="ml">AIME 2026</div></div></div>
+  <div class="cf">
+    <span class="cl2">商业友好</span>
+    <span class="cp">API · 按量计费</span>
+    <button class="cpy" onclick="cp(this,'GLM-5|745B|56.2% Terminal|商业友好|智谱AI')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc green">
+  <div class="ct"><div class="cr">🥉</div><div class="cb"><span class="bg bg-green">17B激活</span><span class="bg bg-blue">多模态Agent</span></div></div>
+  <div class="cm2">Qwen3.5-397B</div>
+  <div class="cp2">阿里巴巴 · 2026年2月</div>
+  <div class="ca">17B 激活参数达顶级，256K 上下文，多模态+Agent 全能，MoE 效率巅峰</div>
+  <div class="cmg"><div class="mt"><div class="mv">17B</div><div class="ml">激活参数</div></div><div class="mt"><div class="mv">256K</div><div class="ml">上下文</div></div></div>
+  <div class="cf">
+    <span class="cl2">Qwen3.5 License</span>
+    <span class="cp">API · 按量计费</span>
+    <button class="cpy" onclick="cp(this,'Qwen3.5-397B|397B MoE|17B激活|256K上下文|Qwen3.5 License|阿里巴巴')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div>",vi:"<div class="mc blue">
+  <div class="ct"><div class="cr">🥇</div><div class="cb"><span class="bg bg-blue">视频理解 SOTA</span><span class="bg bg-green">开源最强</span></div></div>
+  <div class="cm2">InternVL3.5</div>
+  <div class="cp2">上海AI Lab · 2025年8月</div>
+  <div class="ca">Video-MME 开源 SOTA，241B MoE 多模态，视频内容理解+摘要，复杂时序推理</div>
+  <div class="cmg"><div class="mt"><div class="mv">SOTA</div><div class="ml">Video-MME</div></div><div class="mt"><div class="mv">241B</div><div class="ml">总参数</div></div></div>
+  <div class="cf">
+    <span class="cl2">BSD-3-Clause</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'InternVL3.5|241B MoE|Video-MME SOTA|BSD类|上海AI Lab')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc green">
+  <div class="ct"><div class="cr">🥈</div><div class="cb"><span class="bg bg-green">Apache 2.0</span><span class="bg bg-blue">超长视频</span></div></div>
+  <div class="cm2">Qwen3-VL-32B</div>
+  <div class="cp2">阿里巴巴 · 2025年10月</div>
+  <div class="ca">超长视频理解，256K 上下文，视频问答+字幕生成，商用完全开放</div>
+  <div class="cmg"><div class="mt"><div class="mv">256K</div><div class="ml">上下文</div></div><div class="mt"><div class="mv">SOTA</div><div class="ml">视频理解</div></div></div>
+  <div class="cf">
+    <span class="cl2">Apache 2.0</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'Qwen3-VL-32B|32B|256K上下文视频|Apache 2.0|阿里巴巴')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div><div class="mc purple">
+  <div class="ct"><div class="cr">🥉</div><div class="cb"><span class="bg bg-purple">时序定位强</span><span class="bg bg-orange">视频SOTA</span></div></div>
+  <div class="cm2">CogVLM2-Video</div>
+  <div class="cp2">THUDM · 2025年</div>
+  <div class="ca">视频理解 SOTA，~17B 参数，时序事件定位强，视频问答，THUDM 智谱系</div>
+  <div class="cmg"><div class="mt"><div class="mv">~17B</div><div class="ml">总参数</div></div><div class="mt"><div class="mv">SOTA</div><div class="ml">视频理解</div></div></div>
+  <div class="cf">
+    <span class="cl2">Apache 2.0</span>
+    <span class="cp">免费权重</span>
+    <button class="cpy" onclick="cp(this,'CogVLM2-Video|~17B|视频SOTA|Apache 2.0|THUDM')">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      复制配置
+    </button>
+  </div>
+</div>"};
+var LK={"default": "为你精选 · TOP 3 推薦", "math": "🧮 数学推理推薦", "vision": "👁 视觉理解推薦", "code": "💻 代码开发推薦", "agent": "🤖 Agent 能力推薦", "video": "🎬 视频理解推薦"};
+
+function getCat(t){
+  var l=t.toLowerCase();
+  if(/\u6570\u5b66|\u8ba1\u7b97|amie|math|\u63a8\u7406/i.test(l))return"m";
+  if(/\u89c6\u89c9|\u56fe\u7247|\u56fe\u50cf|\u770b\u56fe|vlm|vision|ocr|\u6587\u6863/i.test(l))return"v";
+  if(/\u4ee3\u7801|\u7f16\u7a0b|code|swe|\u5f00\u53d1/i.test(l))return"c";
+  if(/agent|\u4ee3\u7406|\u5de5\u5177|\u81ea\u52a8\u5316|task/i.test(l))return"a";
+  if(/\u89c6\u9891|movie|film|clip/i.test(l))return"vi";
+  return"d";
+}
+
+function rc(k){document.getElementById("cg").innerHTML=D[k]||D.d;document.getElementById("cm").textContent=LK[k]||LK.default;}
+function fh(t){document.getElementById("si").value=t;document.getElementById("si").focus();rc(getCat(t));}
+
+document.getElementById("si").addEventListener("input",function(){var k=getCat(this.value);if(k!=="d")rc(k);});
+document.getElementById("sb").addEventListener("click",function(){var t=document.getElementById("si").value;if(!t.trim())return;rc(getCat(t));});
+document.getElementById("si").addEventListener("keydown",function(e){if(e.key==="Enter")document.getElementById("sb").click();});
+
+function cp(btn,cfg){
+  navigator.clipboard.writeText(cfg).then(function(){
+    btn.classList.add("copied");
+    btn.innerHTML='<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> \u5df2\u590d\u5236';
+    var toast=document.getElementById("toast");toast.classList.add("show");
+    setTimeout(function(){
+      btn.classList.remove("copied");
+      btn.innerHTML='<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> \u590d\u5236\u914d\u7f6e';
+      toast.classList.remove("show");
+    },2000);
+  });
+}
+
+rc("d");
+
+</script>
+</body>
+</html>

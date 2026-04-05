@@ -1,0 +1,536 @@
+{
+  "default": [
+    {
+      "id": "glm5",
+      "name": "GLM-5",
+      "pub": "智谱AI · 2026年2月",
+      "rank": "🥇",
+      "badges": [
+        "综合最强",
+        "数学 SOTA"
+      ],
+      "badgeClass": [
+        "blue",
+        "orange"
+      ],
+      "ability": "AIME 2026 达 92.7%，史上最低幻觉率，数学+工程双强，通用推理旗舰",
+      "metrics": [
+        [
+          "92.7%",
+          "AIME 2026"
+        ],
+        [
+          "97.4%",
+          "MATH-500"
+        ]
+      ],
+      "license": "商业友好",
+      "price": "API · 按量计费",
+      "color": "blue",
+      "config": "GLM-5|745B|92.7% AIME|MATH-500 97.4%|商业友好|智谱AI"
+    },
+    {
+      "id": "r1",
+      "name": "DeepSeek-R1",
+      "pub": "DeepSeek · 2026年1月",
+      "rank": "🥈",
+      "badges": [
+        "推理最强",
+        "MIT 许可"
+      ],
+      "badgeClass": [
+        "purple",
+        "green"
+      ],
+      "ability": "强化学习推理 SOTA，AIME ~86%，671B MoE 稀疏架构，37B 激活参数，效率极致",
+      "metrics": [
+        [
+          "~86%",
+          "AIME 2024"
+        ],
+        [
+          "671B",
+          "总参数"
+        ]
+      ],
+      "license": "MIT 许可",
+      "price": "免费权重",
+      "color": "purple",
+      "config": "DeepSeek-R1|671B MoE|~86% AIME|MIT|DeepSeek"
+    },
+    {
+      "id": "q3vl",
+      "name": "Qwen3-VL-32B",
+      "pub": "阿里巴巴 · 2025年10月",
+      "rank": "🥉",
+      "badges": [
+        "Apache 2.0",
+        "多模态"
+      ],
+      "badgeClass": [
+        "green",
+        "blue"
+      ],
+      "ability": "256K 上下文，多模态理解+数学推理，MathVista 85.5%，视频理解 SOTA，商用完全开放",
+      "metrics": [
+        [
+          "85.5%",
+          "MathVista"
+        ],
+        [
+          "256K",
+          "上下文"
+        ]
+      ],
+      "license": "Apache 2.0",
+      "price": "免费权重",
+      "color": "green",
+      "config": "Qwen3-VL-32B|32B|85.5% MathVista|256K上下文|Apache 2.0|阿里巴巴"
+    }
+  ],
+  "math": [
+    {
+      "id": "glm5",
+      "name": "GLM-5",
+      "pub": "智谱AI · 2026年2月",
+      "rank": "🥇",
+      "badges": [
+        "综合最强",
+        "数学 SOTA"
+      ],
+      "badgeClass": [
+        "blue",
+        "orange"
+      ],
+      "ability": "AIME 2026 达 92.7%，MATH-500 97.4%，史上最低幻觉率，数学+工程双强",
+      "metrics": [
+        [
+          "92.7%",
+          "AIME 2026"
+        ],
+        [
+          "97.4%",
+          "MATH-500"
+        ]
+      ],
+      "license": "商业友好",
+      "price": "API · 按量计费",
+      "color": "blue",
+      "config": "GLM-5|745B|92.7% AIME|MATH-500 97.4%|商业友好|智谱AI"
+    },
+    {
+      "id": "st3",
+      "name": "Step-3.5-Flash",
+      "pub": "StepFun · 2026年2月",
+      "rank": "🥈",
+      "badges": [
+        "高性价比",
+        "11B激活"
+      ],
+      "badgeClass": [
+        "green",
+        "blue"
+      ],
+      "ability": "IMO-AnswerBench 85.4%，稀疏 MoE 架构，11B 激活参数达前沿水平，性价比极高",
+      "metrics": [
+        [
+          "85.4%",
+          "IMO-Bench"
+        ],
+        [
+          "11B",
+          "激活参数"
+        ]
+      ],
+      "license": "待确认",
+      "price": "API · 低成本",
+      "color": "green",
+      "config": "Step-3.5-Flash|11B激活 MoE|85.4% IMO|MoE架构|StepFun"
+    },
+    {
+      "id": "r1",
+      "name": "DeepSeek-R1",
+      "pub": "DeepSeek · 2026年1月",
+      "rank": "🥉",
+      "badges": [
+        "推理最强",
+        "MIT 许可"
+      ],
+      "badgeClass": [
+        "purple",
+        "green"
+      ],
+      "ability": "强化学习推理 SOTA，AIME ~86%，671B MoE 稀疏架构，37B 激活参数，效率极致",
+      "metrics": [
+        [
+          "~86%",
+          "AIME 2024"
+        ],
+        [
+          "671B",
+          "总参数"
+        ]
+      ],
+      "license": "MIT 许可",
+      "price": "免费权重",
+      "color": "purple",
+      "config": "DeepSeek-R1|671B MoE|~86% AIME|MIT|DeepSeek"
+    }
+  ],
+  "vision": [
+    {
+      "id": "ivl",
+      "name": "InternVL3.5",
+      "pub": "上海AI Lab · 2025年8月",
+      "rank": "🥇",
+      "badges": [
+        "VLM 最强",
+        "BSD类许可"
+      ],
+      "badgeClass": [
+        "blue",
+        "green"
+      ],
+      "ability": "开源 VLM 综合最强，Cascade RL 控制幻觉，241B MoE，视频理解 SOTA，多语言支持",
+      "metrics": [
+        [
+          "73分",
+          "MMMU"
+        ],
+        [
+          "~97%",
+          "DocVQA"
+        ]
+      ],
+      "license": "BSD-3-Clause",
+      "price": "免费权重",
+      "color": "blue",
+      "config": "InternVL3.5|241B MoE|73 MMMU|BSD类|上海AI Lab"
+    },
+    {
+      "id": "q3vl",
+      "name": "Qwen3-VL-32B",
+      "pub": "阿里巴巴 · 2025年10月",
+      "rank": "🥈",
+      "badges": [
+        "Apache 2.0",
+        "多模态"
+      ],
+      "badgeClass": [
+        "green",
+        "blue"
+      ],
+      "ability": "256K 上下文，多模态理解+数学推理，MathVista 85.5%，视频理解 SOTA，商用完全开放",
+      "metrics": [
+        [
+          "85.5%",
+          "MathVista"
+        ],
+        [
+          "256K",
+          "上下文"
+        ]
+      ],
+      "license": "Apache 2.0",
+      "price": "免费权重",
+      "color": "green",
+      "config": "Qwen3-VL-32B|32B|85.5% MathVista|Apache 2.0|阿里巴巴"
+    },
+    {
+      "id": "g4",
+      "name": "Gemma 4-31B",
+      "pub": "Google · 2026年4月",
+      "rank": "🥉",
+      "badges": [
+        "Apache 2.0",
+        "全模态"
+      ],
+      "badgeClass": [
+        "purple",
+        "green"
+      ],
+      "ability": "Google 全面切换 Apache 2.0，全系列多模态，140+语言，128K 上下文，旗舰级性能",
+      "metrics": [
+        [
+          "31B",
+          "旗舰规格"
+        ],
+        [
+          "140+",
+          "语言支持"
+        ]
+      ],
+      "license": "Apache 2.0",
+      "price": "免费权重",
+      "color": "purple",
+      "config": "Gemma-4-31B|31B|全模态|Apache 2.0|Google"
+    }
+  ],
+  "code": [
+    {
+      "id": "mm25",
+      "name": "MiniMax M2.5",
+      "pub": "MiniMax · 2026年2月",
+      "rank": "🥇",
+      "badges": [
+        "SWE-Bench 第一",
+        "80.2%"
+      ],
+      "badgeClass": [
+        "blue",
+        "orange"
+      ],
+      "ability": "SWE-Bench 80.2% 开源最高纪录，与 Claude Opus 4.6 持平，MoE 高效架构",
+      "metrics": [
+        [
+          "80.2%",
+          "SWE-Bench"
+        ],
+        [
+          "MoE",
+          "架构"
+        ]
+      ],
+      "license": "API 商业",
+      "price": "API · 按量计费",
+      "color": "blue",
+      "config": "MiniMax-M2.5|MoE|80.2% SWE-Bench|API商业|MiniMax"
+    },
+    {
+      "id": "qcnext",
+      "name": "Qwen3-Coder-Next",
+      "pub": "阿里巴巴 · 2026年2月",
+      "rank": "🥈",
+      "badges": [
+        "代码专用",
+        "3B激活"
+      ],
+      "badgeClass": [
+        "green",
+        "blue"
+      ],
+      "ability": "Aider s 74%，专用代码模型，3B 激活参数达 Sonnet 4.5 级别，消费级 GPU 可跑",
+      "metrics": [
+        [
+          "74%",
+          "Aider s"
+        ],
+        [
+          "3B",
+          "激活参数"
+        ]
+      ],
+      "license": "Qwen3.5 License",
+      "price": "免费权重",
+      "color": "green",
+      "config": "Qwen3-Coder-Next|3B激活 MoE|74% Aider|Qwen3.5 License|阿里巴巴"
+    },
+    {
+      "id": "r1",
+      "name": "DeepSeek-R1",
+      "pub": "DeepSeek · 2026年1月",
+      "rank": "🥉",
+      "badges": [
+        "推理最强",
+        "MIT 许可"
+      ],
+      "badgeClass": [
+        "purple",
+        "green"
+      ],
+      "ability": "强化学习推理 SOTA，671B MoE 稀疏架构，37B 激活参数，代码理解+生成双强",
+      "metrics": [
+        [
+          "~86%",
+          "AIME 2024"
+        ],
+        [
+          "671B",
+          "总参数"
+        ]
+      ],
+      "license": "MIT 许可",
+      "price": "免费权重",
+      "color": "purple",
+      "config": "DeepSeek-R1|671B MoE|~86% AIME|MIT|DeepSeek"
+    }
+  ],
+  "agent": [
+    {
+      "id": "mm27",
+      "name": "MiniMax M2.7",
+      "pub": "MiniMax · 2026年3月",
+      "rank": "🥇",
+      "badges": [
+        "GDPval-AA 最强",
+        "自进化"
+      ],
+      "badgeClass": [
+        "blue",
+        "orange"
+      ],
+      "ability": "GDPval-AA ELO 1495 开源最高，自进化训练，Terminal-Bench 57.0%，Agent 全能旗舰",
+      "metrics": [
+        [
+          "1495",
+          "GDPval ELO"
+        ],
+        [
+          "57.0%",
+          "Terminal-Bench"
+        ]
+      ],
+      "license": "API 商业",
+      "price": "API · 按量计费",
+      "color": "blue",
+      "config": "MiniMax-M2.7|GDPval 1495|57.0% Terminal|API商业|MiniMax"
+    },
+    {
+      "id": "glm5",
+      "name": "GLM-5",
+      "pub": "智谱AI · 2026年2月",
+      "rank": "🥈",
+      "badges": [
+        "综合最强",
+        "56.2% Terminal"
+      ],
+      "badgeClass": [
+        "purple",
+        "orange"
+      ],
+      "ability": "Terminal-Bench 56.2%，史上最低幻觉率，综合 Agent 能力极强，工具调用出色",
+      "metrics": [
+        [
+          "56.2%",
+          "Terminal-Bench"
+        ],
+        [
+          "92.7%",
+          "AIME 2026"
+        ]
+      ],
+      "license": "商业友好",
+      "price": "API · 按量计费",
+      "color": "purple",
+      "config": "GLM-5|745B|56.2% Terminal|商业友好|智谱AI"
+    },
+    {
+      "id": "q397",
+      "name": "Qwen3.5-397B",
+      "pub": "阿里巴巴 · 2026年2月",
+      "rank": "🥉",
+      "badges": [
+        "17B激活",
+        "多模态Agent"
+      ],
+      "badgeClass": [
+        "green",
+        "blue"
+      ],
+      "ability": "17B 激活参数达顶级，256K 上下文，多模态+Agent 全能，MoE 效率巅峰",
+      "metrics": [
+        [
+          "17B",
+          "激活参数"
+        ],
+        [
+          "256K",
+          "上下文"
+        ]
+      ],
+      "license": "Qwen3.5 License",
+      "price": "API · 按量计费",
+      "color": "green",
+      "config": "Qwen3.5-397B|397B MoE|17B激活|256K上下文|Qwen3.5 License|阿里巴巴"
+    }
+  ],
+  "video": [
+    {
+      "id": "ivl",
+      "name": "InternVL3.5",
+      "pub": "上海AI Lab · 2025年8月",
+      "rank": "🥇",
+      "badges": [
+        "视频理解 SOTA",
+        "开源最强"
+      ],
+      "badgeClass": [
+        "blue",
+        "green"
+      ],
+      "ability": "Video-MME 开源 SOTA，241B MoE 多模态，视频内容理解+摘要，复杂时序推理",
+      "metrics": [
+        [
+          "SOTA",
+          "Video-MME"
+        ],
+        [
+          "241B",
+          "总参数"
+        ]
+      ],
+      "license": "BSD-3-Clause",
+      "price": "免费权重",
+      "color": "blue",
+      "config": "InternVL3.5|241B MoE|Video-MME SOTA|BSD类|上海AI Lab"
+    },
+    {
+      "id": "q3vl",
+      "name": "Qwen3-VL-32B",
+      "pub": "阿里巴巴 · 2025年10月",
+      "rank": "🥈",
+      "badges": [
+        "Apache 2.0",
+        "超长视频"
+      ],
+      "badgeClass": [
+        "green",
+        "blue"
+      ],
+      "ability": "超长视频理解，256K 上下文，视频问答+字幕生成，商用完全开放",
+      "metrics": [
+        [
+          "256K",
+          "上下文"
+        ],
+        [
+          "SOTA",
+          "视频理解"
+        ]
+      ],
+      "license": "Apache 2.0",
+      "price": "免费权重",
+      "color": "green",
+      "config": "Qwen3-VL-32B|32B|256K上下文视频|Apache 2.0|阿里巴巴"
+    },
+    {
+      "id": "cgv2",
+      "name": "CogVLM2-Video",
+      "pub": "THUDM · 2025年",
+      "rank": "🥉",
+      "badges": [
+        "时序定位强",
+        "视频SOTA"
+      ],
+      "badgeClass": [
+        "purple",
+        "orange"
+      ],
+      "ability": "视频理解 SOTA，~17B 参数，时序事件定位强，视频问答，THUDM 智谱系",
+      "metrics": [
+        [
+          "~17B",
+          "总参数"
+        ],
+        [
+          "SOTA",
+          "视频理解"
+        ]
+      ],
+      "license": "Apache 2.0",
+      "price": "免费权重",
+      "color": "purple",
+      "config": "CogVLM2-Video|~17B|视频SOTA|Apache 2.0|THUDM"
+    }
+  ]
+}

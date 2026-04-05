@@ -13,7 +13,7 @@
 | **许可协议** | Tongyi Qianwen License（阿里巴巴商业友好许可，可商用） |
 | **HuggingFace** | https://huggingface.co/Qwen/Qwen3-VL |
 | **魔搭 ModelScope** | https://modelscope.cn/models/Qwen/Qwen3-VL |
-| **发布年份/版本** | 2025年9月~11月（技术报告 2025年11月发布） |
+| **发布年份/版本** | **2025-09-23**（首发）；2025-10-29（Qwen3-VL-235B-A22B-Instruct GGUF） |
 
 ## 核心能力描述
 

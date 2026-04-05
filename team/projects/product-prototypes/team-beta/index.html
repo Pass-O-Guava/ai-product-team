@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModelRadar — 让 AI 模型对比，3秒搞定</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #070b14;
+    --bg-secondary: #0d1424;
+    --bg-card: #111827;
+    --bg-card-hover: #1a2438;
+    --border: rgba(56, 189, 248, 0.12);
+    --accent: #38bdf8;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --accent5: #f472b6;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #475569;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: rgba(13, 20, 36, 0.98);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .logo-area { display: flex; align-items: center; gap: 10px; }
+
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    box-shadow: 0 0 18px rgba(56,189,248,0.3);
+  }
+
+  .logo-text {
+    font-size: 20px; font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #38bdf8, #a78bfa);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .tagline {
+    font-size: 12px; color: var(--text-secondary);
+    background: rgba(56,189,248,0.07);
+    border: 1px solid rgba(56,189,248,0.18);
+    padding: 3px 11px; border-radius: 20px; font-weight: 500;
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn-pdf {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 16px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none; border-radius: 8px;
+    color: white; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 0 18px rgba(239,68,68,0.2);
+  }
+  .btn-pdf:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(239,68,68,0.4); }
+  .btn-pdf svg { width: 14px; height: 14px; }
+
+  .badge-live {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 9px;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 20px; font-size: 10px; color: #34d399; font-weight: 600;
+  }
+
+  .dot-live {
+    width: 5px; height: 5px; background: #34d399;
+    border-radius: 50%; animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.5; transform:scale(1.6); }
+  }
+
+  /* ── MAIN ── */
+  .main-content { display: flex; flex: 1; overflow: hidden; }
+
+  /* LEFT */
+  .left-panel {
+    width: 230px; flex-shrink: 0;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 14px 12px;
+    display: flex; flex-direction: column; gap: 16px;
+    overflow-y: auto;
+  }
+
+  .ps { font-size: 9px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1.3px; color: var(--text-muted); margin-bottom: 7px; }
+
+  .scenario-input {
+    width: 100%; padding: 8px 10px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 7px; color: var(--text-primary);
+    font-size: 11px; font-family: inherit;
+    resize: none; height: 52px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .scenario-input:focus { border-color: var(--accent); }
+  .scenario-input::placeholder { color: var(--text-muted); }
+
+  .preset-btn {
+    width: 100%; padding: 6px 9px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-secondary);
+    font-size: 11px; font-family: inherit;
+    cursor: pointer; text-align: left; margin-bottom: 4px;
+    transition: all 0.2s;
+  }
+  .preset-btn:hover {
+    background: rgba(56,189,248,0.06);
+    border-color: rgba(56,189,248,0.28);
+    color: var(--text-primary);
+  }
+
+  .model-chip {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 9px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 7px; cursor: pointer;
+    transition: all 0.2s; font-size: 11px;
+    color: var(--text-secondary); user-select: none; margin-bottom: 4px;
+  }
+  .model-chip:hover { background: var(--bg-card-hover); }
+  .model-chip.active {
+    background: rgba(56,189,248,0.07);
+    border-color: var(--accent); color: var(--text-primary);
+  }
+  .model-chip .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .chip-check { margin-left: auto; opacity: 0; transition: opacity 0.2s; font-size: 10px; }
+  .model-chip.active .chip-check { opacity: 1; }
+
+  .dim-toggle {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 9px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 7px;
+    cursor: pointer; transition: all 0.2s;
+    font-size: 11px; color: var(--text-secondary); user-select: none; margin-bottom: 4px;
+  }
+  .dim-toggle:hover { background: var(--bg-card-hover); }
+  .dim-toggle.active {
+    background: rgba(56,189,248,0.07);
+    border-color: var(--accent); color: var(--text-primary);
+  }
+  .dim-toggle .dim-icon { font-size: 13px; width: 18px; text-align: center; }
+  .toggle-switch {
+    margin-left: auto; width: 26px; height: 14px;
+    background: var(--text-muted); border-radius: 7px;
+    position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .dim-toggle.active .toggle-switch { background: var(--accent); }
+  .toggle-switch::after {
+    content: ''; position: absolute;
+    width: 10px; height: 10px; background: white;
+    border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s;
+  }
+  .dim-toggle.active .toggle-switch::after { transform: translateX(12px); }
+
+  /* RIGHT */
+  .right-panel {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; padding: 14px 18px; gap: 10px;
+  }
+
+  /* TABLE */
+  .table-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; flex: 0 0 auto;
+  }
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+  }
+  .table-title {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .table-title span {
+    font-size: 9px; padding: 2px 6px;
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.22);
+    border-radius: 9px; color: var(--accent); font-weight: 500;
+  }
+  .sort-btn {
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 9px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-secondary); font-size: 10px;
+    font-family: inherit; cursor: pointer; transition: all 0.2s;
+  }
+  .sort-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+  .table-scroll { overflow-x: auto; overflow-y: auto; max-height: 210px; }
+  table { width: 100%; border-collapse: collapse; min-width: 680px; }
+  thead { position: sticky; top: 0; z-index: 2; }
+  th {
+    padding: 8px 12px; text-align: left; font-size: 9px;
+    font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--text-muted);
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.2s;
+  }
+  th:hover { color: var(--accent); }
+  th.model-col { color: var(--accent); cursor: default; }
+  th.model-col:hover { color: var(--accent); }
+  td {
+    padding: 8px 12px; font-size: 11px; color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(56,189,248,0.025); }
+
+  .model-name-cell {
+    display: flex; align-items: center; gap: 7px;
+    font-weight: 600; color: var(--text-primary); font-size: 11px;
+  }
+  .model-avatar {
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .model-meta { font-size: 9px; color: var(--text-muted); font-weight: 400; margin-top: 1px; }
+
+  .score-bar-cell { display: flex; align-items: center; gap: 7px; min-width: 110px; }
+  .mini-bar {
+    flex: 1; height: 3px; background: rgba(255,255,255,0.05);
+    border-radius: 2px; overflow: hidden; max-width: 55px;
+  }
+  .mini-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+
+  .score-badge {
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
+    font-variant-numeric: tabular-nums; min-width: 38px; text-align: center;
+  }
+
+  .sota-tag {
+    font-size: 8px; padding: 1px 4px;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.28);
+    color: #f87171; border-radius: 3px; margin-left: 4px; font-weight: 600;
+  }
+  .cn-tag {
+    font-size: 8px; padding: 1px 4px;
+    background: rgba(251,146,60,0.12);
+    border: 1px solid rgba(251,146,60,0.28);
+    color: #fb923c; border-radius: 3px; margin-left: 2px; font-weight: 600;
+  }
+  .badge-tag {
+    font-size: 9px; padding: 2px 6px; border-radius: 4px;
+    font-weight: 600; margin-left: 4px;
+  }
+
+  /* CHART AREA */
+  .chart-area {
+    flex: 1; display: flex; gap: 10px; min-height: 0;
+  }
+  .radar-panel {
+    flex: 1; background: var(--bg-secondary);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px; display: flex; flex-direction: column; min-width: 0;
+  }
+  .chart-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px; flex-shrink: 0;
+  }
+  .chart-title { font-size: 11px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 5px; }
+  .chart-canvas-wrap { flex: 1; position: relative; min-height: 0; }
+  #radarChart { width: 100% !important; height: 100% !important; }
+
+  .summary-panel {
+    width: 260px; flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 7px; overflow-y: auto;
+  }
+  .summary-card {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 9px; padding: 10px 12px; transition: all 0.2s;
+  }
+  .summary-card:hover { border-color: rgba(56,189,248,0.28); background: var(--bg-card-hover); }
+  .summary-card-title {
+    font-size: 9px; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-muted);
+    margin-bottom: 5px; font-weight: 700;
+  }
+  .summary-model-name { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; display: flex; align-items: center; gap: 5px; }
+  .summary-provider { font-size: 9px; color: var(--text-muted); margin-bottom: 7px; }
+  .summary-metric-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; margin-bottom: 3px; }
+  .summary-metric-row .label { color: var(--text-muted); }
+  .summary-metric-row .val { font-weight: 600; color: var(--text-primary); }
+  .summary-verdict {
+    margin-top: 7px; padding: 6px 9px;
+    background: rgba(52,211,153,0.06);
+    border: 1px solid rgba(52,211,153,0.12);
+    border-radius: 5px; font-size: 9px;
+    color: #34d399; font-weight: 500; line-height: 1.5;
+  }
+
+  /* FOOTER */
+  footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 24px;
+    background: rgba(13,20,36,0.92);
+    border-top: 1px solid var(--border); flex-shrink: 0;
+  }
+  .footer-left { display: flex; align-items: center; gap: 14px; }
+  .data-source { font-size: 9px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .footer-brand { font-size: 9px; color: var(--text-muted); }
+  .btn-export {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 12px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-secondary); font-size: 11px;
+    font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500;
+  }
+  .btn-export:hover { border-color: var(--accent); color: var(--text-primary); background: rgba(56,189,248,0.05); }
+  .btn-export.primary {
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    border: none; color: white; font-weight: 600;
+    box-shadow: 0 0 14px rgba(56,189,248,0.18);
+  }
+  .btn-export.primary:hover { box-shadow: 0 0 22px rgba(56,189,248,0.38); transform: translateY(-1px); }
+
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-area">
+    <div class="logo-icon">📡</div>
+    <span class="logo-text">ModelRadar</span>
+    <span class="tagline">让 AI 模型对比，3秒搞定</span>
+  </div>
+  <div class="header-actions">
+    <div class="badge-live">
+      <span class="dot-live"></span>
+      数据实时更新 · SOTA模型仓
+    </div>
+    <button class="btn-pdf" onclick="exportPDF()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
+      导出对比报告
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main-content">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div>
+      <div class="ps">🔍 需求场景</div>
+      <textarea class="scenario-input" id="scenarioInput" placeholder="如：视频理解、文档解析、数学推理..." oninput="onScenarioChange()">视频内容理解与摘要</textarea>
+    </div>
+
+    <div>
+      <div class="ps">⚡ 快速场景</div>
+      <button class="preset-btn" onclick="applyPreset('video')">📹 视频理解</button>
+      <button class="preset-btn" onclick="applyPreset('doc')">📄 文档解析</button>
+      <button class="preset-btn" onclick="applyPreset('math')">🧮 数学推理</button>
+      <button class="preset-btn" onclick="applyPreset('multimodal')">🔮 多模态综合</button>
+    </div>
+
+    <div>
+      <div class="ps">🧩 对比维度</div>
+      <div class="dim-toggle active" onclick="toggleDim(this,'benchmark')">
+        <span class="dim-icon">📊</span> Benchmark评分<div class="toggle-switch"></div>
+      </div>
+      <div class="dim-toggle active" onclick="toggleDim(this,'price')">
+        <span class="dim-icon">💰</span> 价格/成本<div class="toggle-switch"></div>
+      </div>
+      <div class="dim-toggle active" onclick="toggleDim(this,'license')">
+        <span class="dim-icon">📜</span> 许可证<div class="toggle-switch"></div>
+      </div>
+      <div class="dim-toggle active" onclick="toggleDim(this,'cn')">
+        <span class="dim-icon">🇨🇳</span> 中文支持<div class="toggle-switch"></div>
+      </div>
+      <div class="dim-toggle" onclick="toggleDim(this,'size')">
+        <span class="dim-icon">⚙️</span> 参数量级<div class="toggle-switch"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="ps">🤖 选择模型</div>
+      <div class="model-chip active" onclick="toggleModel(this,'qwen3vl')" data-model="qwen3vl">
+        <span class="dot" style="background:#fb923c"></span>Qwen3-VL-72B<span class="chip-check">✓</span>
+      </div>
+      <div class="model-chip active" onclick="toggleModel(this,'internvl35')" data-model="internvl35">
+        <span class="dot" style="background:#38bdf8"></span>InternVL3.5<span class="chip-check">✓</span>
+      </div>
+      <div class="model-chip active" onclick="toggleModel(this,'deepseekr1')" data-model="deepseekr1">
+        <span class="dot" style="background:#34d399"></span>DeepSeek-R1<span class="chip-check">✓</span>
+      </div>
+      <div class="model-chip active" onclick="toggleModel(this,'minicpmv')" data-model="minicpmv">
+        <span class="dot" style="background:#a78bfa"></span>MiniCPM-V 4.5<span class="chip-check">✓</span>
+      </div>
+      <div class="model-chip" onclick="toggleModel(this,'glm46v')" data-model="glm46v">
+        <span class="dot" style="background:#f472b6"></span>GLM-4.6V<span class="chip-check">✓</span>
+      </div>
+      <div class="model-chip" onclick="toggleModel(this,'llavaov')" data-model="llavaov">
+        <span class="dot" style="background:#fbbf24"></span>LLaVA-OV-1.5<span class="chip-check">✓</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <!-- TABLE -->
+    <div class="table-container">
+      <div class="table-header">
+        <div class="table-title">📋 模型横向对比<span id="modelCount">4 个模型</span></div>
+        <button class="sort-btn" onclick="cycleSort()"><span id="sortLabel">📈 MMMU ↓</span></button>
+      </div>
+      <div class="table-scroll">
+        <table id="compareTable">
+          <thead><tr id="tableHeadRow"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CHART + SUMMARY -->
+    <div class="chart-area">
+      <div class="radar-panel">
+        <div class="chart-panel-header">
+          <div class="chart-title">🕸️ 多维能力雷达图</div>
+          <div style="font-size:9px;color:var(--text-muted)">归一化到 0-100</div>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+      <div class="summary-panel" id="summaryPanel"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <span class="data-source">📡 数据来源：SOTA模型仓 · Benchmark数据 · 官方技术报告</span>
+    <span class="footer-brand">ModelRadar v1.0 · 极光智能</span>
+  </div>
+  <div class="btn-export primary" onclick="exportPDF()" style="display:flex;align-items:center;gap:7px;padding:6px 14px;background:linear-gradient(135deg,#38bdf8,#818cf8);border:none;border-radius:7px;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 0 14px rgba(56,189,248,0.18);">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    导出 PDF 报告
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const MODELS = {
+  qwen3vl: {
+    name:'Qwen3-VL-72B', shortName:'Qwen3-VL',
+    provider:'阿里巴巴 · 通义实验室', params:'72B (MoE)',
+    modalities:'文本·图像·视频·多图',
+    license:'Tongyi License', licenseType:'商业友好', commercial:true, cn:true,
+    price:'免费（开源）', priceLevel:1,
+    color:'#fb923c', bgColor:'rgba(251,146,60,0.12)', avatar:'🦅',
+    metrics:{MMMU:72,MathVista:68,DocVQA:96,VideoMME:95,MMLU:null,AIME:null,Chinese:92,Speed:78,Multimodal:94},
+    verdict:'视频理解开源 SOTA，超长上下文 256K',
+    badge:'🏆 视频SOTA', size:4
+  },
+  internvl35: {
+    name:'InternVL3.5-78B', shortName:'InternVL3.5',
+    provider:'上海AI Lab · OpenGVLab', params:'241B总/28B活跃 (MoE)',
+    modalities:'文本·图像·视频·音频·多图',
+    license:'InternVL License', licenseType:'BSD-3-Clause', commercial:true, cn:true,
+    price:'免费（开源）', priceLevel:1,
+    color:'#38bdf8', bgColor:'rgba(56,189,248,0.12)', avatar:'🔵',
+    metrics:{MMMU:73,MathVista:68,DocVQA:97,VideoMME:97,MMLU:null,AIME:null,Chinese:95,Speed:72,Multimodal:97},
+    verdict:'综合能力最强 VLM，视频理解开源 SOTA',
+    badge:'🏆 综合最强', size:5
+  },
+  deepseekr1: {
+    name:'DeepSeek-R1', shortName:'DeepSeek-R1',
+    provider:'深度求索 · DeepSeek AI', params:'671B总/37B活跃 (MoE)',
+    modalities:'文本（推理强化）',
+    license:'DeepSeek License', licenseType:'商业可商用', commercial:true, cn:true,
+    price:'免费（开源）', priceLevel:1,
+    color:'#34d399', bgColor:'rgba(52,211,153,0.12)', avatar:'🟢',
+    metrics:{MMMU:null,MathVista:null,DocVQA:null,VideoMME:null,MMLU:90,AIME:86,Chinese:88,Speed:75,Multimodal:60},
+    verdict:'推理能力最强，AIME 2024 达 86%',
+    badge:'🏆 推理之王', size:5
+  },
+  minicpmv: {
+    name:'MiniCPM-V 4.5', shortName:'MiniCPM-V',
+    provider:'OpenBMB', params:'8B',
+    modalities:'文本·图像·文档',
+    license:'OpenBMB License', licenseType:'BSD-3-Clause', commercial:true, cn:true,
+    price:'免费（开源）', priceLevel:1,
+    color:'#a78bfa', bgColor:'rgba(167,139,250,0.12)', avatar:'💜',
+    metrics:{MMMU:59,MathVista:63,DocVQA:90,VideoMME:40,MMLU:null,AIME:null,Chinese:90,Speed:92,Multimodal:65},
+    verdict:'8B 轻量级 VLM，部署成本极低，中文友好',
+    badge:'💡 轻量首选', size:1
+  },
+  glm46v: {
+    name:'GLM-4.6V', shortName:'GLM-4.6V',
+    provider:'智谱AI · Z.ai', params:'~9B',
+    modalities:'文本·图像·工具调用',
+    license:'GLM License', licenseType:'商业可商用', commercial:true, cn:true,
+    price:'免费（开源）', priceLevel:1,
+    color:'#f472b6', bgColor:'rgba(244,114,182,0.12)', avatar:'🌸',
+    metrics:{MMMU:65,MathVista:60,DocVQA:96,VideoMME:35,MMLU:null,AIME:null,Chinese:96,Speed:88,Multimodal:72},
+    verdict:'文档理解同规模 SOTA，中文优化极佳',
+    badge:'📄 文档专家', size:2
+  },
+  llavaov: {
+    name:'LLaVA-OV-1.5-8B', shortName:'LLaVA-OV',
+    provider:'LLaVA-VL', params:'8B',
+    modalities:'文本·图像·视频·多图',
+    license:'LLaVA License', licenseType:'研究可商用', commercial:false, cn:false,
+    price:'免费（开源）', priceLevel:1,
+    color:'#fbbf24', bgColor:'rgba(251,191,36,0.12)', avatar:'🌻',
+    metrics:{MMMU:62,MathVista:58,DocVQA:89,VideoMME:55,MMLU:null,AIME:null,Chinese:45,Speed:90,Multimodal:70},
+    verdict:'多图视频理解，轻量多模态方案',
+    badge:'🔧 多模态', size:1
+  }
+};
+
+// State
+const activeModels = new Set(['qwen3vl','internvl35','deepseekr1','minicpmv']);
+const activeDims = new Set(['benchmark','price','license','cn']);
+let sortField = 'MMMU';
+let sortDir = -1;
+let radarChart = null;
+
+// ═══════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════
+function applyPreset(preset) {
+  const presets = {
+    video:     { text:'视频内容理解与摘要', models:['qwen3vl','internvl35','llavaov','minicpmv'] },
+    doc:       { text:'复杂文档理解与问答', models:['internvl35','qwen3vl','glm46v','minicpmv'] },
+    math:      { text:'复杂数学推理与求解', models:['deepseekr1','qwen3vl','internvl35','minicpmv'] },
+    multimodal:{ text:'多模态综合理解',     models:['internvl35','qwen3vl','glm46v','llavaov'] }
+  };
+  const cfg = presets[preset];
+  document.getElementById('scenarioInput').value = cfg.text;
+
+  // reset all chips
+  document.querySelectorAll('.model-chip').forEach(c => {
+    c.classList.remove('active');
+    activeModels.delete(c.dataset.model);
+  });
+  cfg.models.forEach(m => {
+    const chip = document.querySelector(`[data-model="${m}"]`);
+    if (chip) { chip.classList.add('active'); activeModels.add(m); }
+  });
+  renderAll();
+}
+
+// ═══════════════════════════════════════════
+// TOGGLES
+// ═══════════════════════════════════════════
+function toggleDim(el, dim) {
+  el.classList.toggle('active');
+  if (activeDims.has(dim)) activeDims.delete(dim);
+  else activeDims.add(dim);
+  renderAll();
+}
+
+function toggleModel(el, model) {
+  el.classList.toggle('active');
+  if (activeModels.has(model)) {
+    if (activeModels.size > 1) activeModels.delete(model);
+  } else {
+    activeModels.add(model);
+  }
+  renderAll();
+}
+
+function cycleSort() {
+  const fields = ['MMMU','DocVQA','VideoMME','MMLU','AIME','Chinese'];
+  const idx = fields.indexOf(sortField);
+  sortField = fields[(idx + 1) % fields.length];
+  sortDir = -1;
+  document.getElementById('sortLabel').textContent = `📈 ${sortField} ${sortDir===1?'↑':'↓'}`;
+  renderTable();
+}
+
+// ═══════════════════════════════════════════
+// SCENARIO
+// ═══════════════════════════════════════════
+function onScenarioChange() {}
+
+function exportPDF() {
+  // Simple alert for demo; real implementation would use html2canvas + jsPDF
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111827;border:1px solid #38bdf8;border-radius:12px;padding:24px 32px;z-index:9999;text-align:center;color:white;font-family:Inter,sans-serif;';
+  el.innerHTML = '<div style="font-size:18px;font-weight:700;margin-bottom:8px;">📄 正在生成 PDF 报告...</div><div style="font-size:12px;color:#94a3b8;">对比 '+activeModels.size+' 个模型的 Benchmark 数据</div>';
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el    el.remove();
+    alert('✅ PDF 报告已准备好！\n\n在生产环境中，这里会调用 html2canvas + jsPDF 生成可下载的对比报告。\n\n数据来源：SOTA模型仓 · ' + new Date().toLocaleDateString('zh-CN') + '');
+  }, 1200);
+}
+
+// ═══════════════════════════════════════════
+// TABLE RENDERING
+// ═══════════════════════════════════════════
+function scoreBgColor(val, max) {
+  const pct = val / max;
+  if (pct >= 0.85) return 'rgba(52,211,153,0.6)';
+  if (pct >= 0.7)  return 'rgba(56,189,248,0.5)';
+  if (pct >= 0.5)  return 'rgba(167,139,250,0.5)';
+  return 'rgba(251,146,60,0.4)';
+}
+
+function scoreTextColor(val, max) {
+  const pct = val / max;
+  if (pct >= 0.85) return '#34d399';
+  if (pct >= 0.7)  return '#38bdf8';
+  if (pct >= 0.5)  return '#a78bfa';
+  return '#fb923c';
+}
+
+function licenseStyle(licenseType) {
+  if (licenseType.includes('Apache')||licenseType.includes('MIT')||licenseType.includes('BSD')) {
+    return { bg:'rgba(52,211,153,0.12)', color:'#34d399', border:'rgba(52,211,153,0.3)' };
+  }
+  if (licenseType.includes('商业')||licenseType.includes('可商用')) {
+    return { bg:'rgba(56,189,248,0.12)', color:'#38bdf8', border:'rgba(56,189,248,0.3)' };
+  }
+  if (licenseType.includes('研究')) {
+    return { bg:'rgba(251,146,60,0.1)', color:'#fb923c', border:'rgba(251,146,60,0.25)' };
+  }
+  return { bg:'rgba(71,85,105,0.2)', color:'#94a3b8', border:'rgba(71,85,105,0.3)' };
+}
+
+function priceStyle(priceLevel) {
+  if (priceLevel <= 1) return { bg:'rgba(52,211,153,0.1)', color:'#34d399' };
+  if (priceLevel <= 2) return { bg:'rgba(56,189,248,0.1)', color:'#38bdf8' };
+  if (priceLevel <= 3) return { bg:'rgba(167,139,250,0.1)', color:'#a78bfa' };
+  return { bg:'rgba(251,146,60,0.1)', color:'#fb923c' };
+}
+
+function renderTable() {
+  const activeModelKeys = [...activeModels];
+  const mKeys = activeModelKeys.slice().sort((a,b) => {
+    const ma = MODELS[a].metrics[sortField] ?? -999;
+    const mb = MODELS[b].metrics[sortField] ?? -999;
+    return sortDir * (mb - ma);
+  });
+
+  // Header
+  const headRow = document.getElementById('tableHeadRow');
+  let headHTML = '<th class="model-col">模型</th>';
+  if (activeDims.has('benchmark')) {
+    ['参数量','MMMU','MathVista','DocVQA','Video-MME','MMLU','AIME'].forEach(col => {
+      headHTML += `<th>${col}</th>`;
+    });
+  }
+  if (activeDims.has('price')) headHTML += '<th>价格</th>';
+  if (activeDims.has('license')) headHTML += '<th>许可证</th>';
+  if (activeDims.has('cn')) headHTML += '<th>中文</th>';
+  if (activeDims.has('size')) headHTML += '<th>中文支持</th>';
+  headRow.innerHTML = headHTML;
+
+  // Body
+  const tbody = document.getElementById('tableBody');
+  let bodyHTML = '';
+
+  mKeys.forEach(key => {
+    const m = MODELS[key];
+    const s = scoreTextColor;
+
+    let row = `<tr>`;
+    // Model name
+    row += `<td>
+      <div class="model-name-cell">
+        <div class="model-avatar" style="background:${m.bgColor};color:${m.color}">${m.avatar}</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            ${m.name}
+            <span class="badge-tag" style="background:${m.bgColor};color:${m.color};font-size:8px;">${m.badge}</span>
+          </div>
+          <div class="model-meta">${m.provider}</div>
+        </div>
+      </div>
+    </td>`;
+
+    if (activeDims.has('benchmark')) {
+      // Params
+      row += `<td style="font-size:10px;color:var(--text-muted);">${m.params}</td>`;
+
+      // MMMU
+      const mmmu = m.metrics.MMMU;
+      if (mmmu != null) {
+        const pct = Math.round(mmmu / 100 * 100);
+        row += `<td>
+          <div class="score-bar-cell">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${scoreBgColor(mmmu,100)}"></div></div>
+            <span class="score-badge" style="background:${m.bgColor};color:${m.color}">${mmmu}</span>
+          </div>
+        </td>`;
+      } else {
+        row += `<td style="color:var(--text-muted);font-size:10px;">—</td>`;
+      }
+
+      // MathVista
+      const math = m.metrics.MathVista;
+      if (math != null) {
+        const pct = Math.round(math / 100 * 100);
+        row += `<td>
+          <div class="score-bar-cell">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${scoreBgColor(math,100)}"></div></div>
+            <span class="score-badge" style="background:${m.bgColor};color:${m.color}">${math}</span>
+          </div>
+        </td>`;
+      } else {
+        row += `<td style="color:var(--text-muted);font-size:10px;">—</td>`;
+      }
+
+      // DocVQA
+      const doc = m.metrics.DocVQA;
+      if (doc != null) {
+        const pct = Math.round(doc / 100 * 100);
+        row += `<td>
+          <div class="score-bar-cell">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${scoreBgColor(doc,100)}"></div></div>
+            <span class="score-badge" style="background:${m.bgColor};color:${m.color}">${doc}</span>
+          </div>
+        </td>`;
+      } else {
+        row += `<td style="color:var(--text-muted);font-size:10px;">—</td>`;
+      }
+
+      // VideoMME
+      const video = m.metrics.VideoMME;
+      if (video != null) {
+        const pct = Math.round(video / 100 * 100);
+        const isSOTA = video >= 95;
+        row += `<td>
+          <div class="score-bar-cell">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${scoreBgColor(video,100)}"></div></div>
+            <span class="score-badge" style="background:${m.bgColor};color:${m.color}">${video}${isSOTA?'<span class="sota-tag">SOTA</span>':''}</span>
+          </div>
+        </td>`;
+      } else {
+        row += `<td style="color:var(--text-muted);font-size:10px;">—</td>`;
+      }
+
+      // MMLU
+      const mmlu = m.metrics.MMLU;
+      if (mmlu != null) {
+        const pct = Math.round(mmlu / 100 * 100);
+        row += `<td>
+          <div class="score-bar-cell">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${scoreBgColor(mmlu,100)}"></div></div>
+            <span class="score-badge" style="background:${m.bgColor};color:${m.color}">${mmlu}</span>
+          </div>
+        </td>`;
+      } else {
+        row += `<td style="color:var(--text-muted);font-size:10px;">—</td>`;
+      }
+
+      // AIME
+      const aime = m.metrics.AIME;
+      if (aime != null) {
+        const pct = Math.round(aime / 100 * 100);
+        row += `<td>
+          <div class="score-bar-cell">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${scoreBgColor(aime,100)}"></div></div>
+            <span class="score-badge" style="background:${m.bgColor};color:${m.color}">${aime}</span>
+          </div>
+        </td>`;
+      } else {
+        row += `<td style="color:var(--text-muted);font-size:10px;">—</td>`;
+      }
+    }
+
+    if (activeDims.has('price')) {
+      const ps = priceStyle(m.priceLevel);
+      row += `<td><span class="score-badge" style="background:${ps.bg};color:${ps.color};">${m.price}</span></td>`;
+    }
+
+    if (activeDims.has('license')) {
+      const ls = licenseStyle(m.licenseType);
+      row += `<td><span class="score-badge" style="background:${ls.bg};color:${ls.color};border:1px solid ${ls.border};">${m.licenseType}</span></td>`;
+    }
+
+    if (activeDims.has('cn')) {
+      if (m.cn) {
+        const chScore = m.metrics.Chinese;
+        const pct = Math.round(chScore / 100 * 100);
+        row += `<td>
+          <div class="score-bar-cell">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${scoreBgColor(chScore,100)}"></div></div>
+            <span class="score-badge" style="background:rgba(239,68,68,0.12);color:#fb923c;">${chScore}<span class="cn-tag">中文</span></span>
+          </div>
+        </td>`;
+      } else {
+        row += `<td><span class="score-badge" style="background:rgba(71,85,105,0.2);color:#94a3b8;">不支持</span></td>`;
+      }
+    }
+
+    row += `</tr>`;
+    bodyHTML += row;
+  });
+
+  tbody.innerHTML = bodyHTML;
+  document.getElementById('modelCount').textContent = mKeys.length + ' 个模型';
+}
+
+// ═══════════════════════════════════════════
+// RADAR CHART
+// ═══════════════════════════════════════════
+function getRadarData() {
+  const keys = [...activeModels];
+  const radarFields = ['MMMU','DocVQA','VideoMME','Chinese','Speed','Multimodal'];
+  const labels = ['MMMU','文档理解','视频理解','中文支持','推理速度','综合能力'];
+
+  const maxes = {};
+  radarFields.forEach(f => {
+    maxes[f] = Math.max(...keys.map(k => MODELS[k].metrics[f] || 0));
+  });
+
+  const datasets = keys.map(key => {
+    const m = MODELS[key];
+    const data = radarFields.map(f => {
+      const v = m.metrics[f];
+      if (v == null) return 0;
+      return Math.round((v / (maxes[f] || 1)) * 100);
+    });
+    return {
+      label: m.shortName,
+      data,
+      backgroundColor: m.bgColor,
+      borderColor: m.color,
+      borderWidth: 2,
+      pointBackgroundColor: m.color,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    };
+  });
+
+  return { labels, datasets };
+}
+
+function renderRadar() {
+  const ctx = document.getElementById('radarChart');
+  const { labels, datasets } = getRadarData();
+
+  if (radarChart) {
+    radarChart.data.labels = labels;
+    radarChart.data.datasets = datasets;
+    radarChart.update('active');
+    return;
+  }
+
+  radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#94a3b8',
+            font: { family: 'Inter', size: 11 },
+            padding: 14,
+            usePointStyle: true,
+            pointStyleWidth: 8
+          }
+        },
+        tooltip: {
+          backgroundColor: '#111827',
+          borderColor: 'rgba(56,189,248,0.3)',
+          borderWidth: 1,
+          titleColor: '#f1f5f9',
+          bodyColor: '#94a3b8',
+          padding: 10,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}%`
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: {
+            stepSize: 25,
+            color: '#475569',
+            backdropColor: 'transparent',
+            font: { size: 9 }
+          },
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          angleLines: { color: 'rgba(255,255,255,0.06)' },
+          pointLabels: {
+            color: '#94a3b8',
+            font: { family: 'Inter', size: 10, weight: '600' }
+          }
+        }
+      },
+      animation: { duration: 600, easing: 'easeOutQuart' }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// SUMMARY CARDS
+// ═══════════════════════════════════════════
+function renderSummary() {
+  const panel = document.getElementById('summaryPanel');
+  const keys = [...activeModels];
+  let html = '';
+
+  keys.forEach(key => {
+    const m = MODELS[key];
+    html += `
+    <div class="summary-card">
+      <div class="summary-card-title">${m.shortName}</div>
+      <div class="summary-model-name">
+        <span style="width:10px;height:10px;border-radius:50%;background:${m.color};flex-shrink:0"></span>
+        ${m.name}
+      </div>
+      <div class="summary-provider">${m.provider}</div>
+      <div class="summary-metrics">
+        ${m.metrics.MMMU != null ? `<div class="summary-metric-row"><span class="label">MMMU</span><span class="val" style="color:${m.color}">${m.metrics.MMMU}</span></div>` : ''}
+        ${m.metrics.DocVQA != null ? `<div class="summary-metric-row"><span class="label">DocVQA</span><span class="val" style="color:${m.color}">${m.metrics.DocVQA}</span></div>` : ''}
+        ${m.metrics.VideoMME != null ? `<div class="summary-metric-row"><span class="label">Video-MME</span><span class="val" style="color:${m.color}">${m.metrics.VideoMME}</span></div>` : ''}
+        ${m.metrics.MMLU != null ? `<div class="summary-metric-row"><span class="label">MMLU</span><span class="val" style="color:${m.color}">${m.metrics.MMLU}</span></div>` : ''}
+        ${m.metrics.AIME != null ? `<div class="summary-metric-row"><span class="label">AIME</span><span class="val" style="color:${m.color}">${m.metrics.AIME}</span></div>` : ''}
+        <div class="summary-metric-row"><span class="label">许可证</span><span class="val" style="font-size:9px;">${m.licenseType}</span></div>
+        <div class="summary-metric-row"><span class="label">价格</span><span class="val">${m.price}</span></div>
+        ${m.cn ? `<div class="summary-metric-row"><span class="label">中文</span><span class="val" style="color:#fb923c;">✅ 支持</span></div>` : `<div class="summary-metric-row"><span class="label">中文</span><span class="val">❌ 不支持</span></div>`}
+      </div>
+      <div class="summary-verdict">${m.verdict}</div>
+    </div>`;
+  });
+
+  panel.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// SHARE
+// ═══════════════════════════════════════════
+function shareLink() {
+  const params = new URLSearchParams({
+    models: [...activeModels].join(','),
+    dims: [...activeDims].join(','),
+    scenario: document.getElementById('scenarioInput').value
+  });
+  const url = location.origin + location.pathname + '?' + params.toString();
+  navigator.clipboard.writeText(url).then(() => {
+    alert('🔗 分享链接已复制到剪贴板！');
+  }).catch(() => {
+    prompt('复制此链接：', url);
+  });
+}
+
+function copyMarkdown() {
+  const keys = [...activeModels];
+  let md = '# 🤖 AI 模型横向对比报告\n\n';
+  md += '> 场景：' + document.getElementById('scenarioInput').value + '\n\n';
+  md += '| 模型 | MMMU | DocVQA | Video-MME | MMLU | AIME | 许可证 | 中文 |\n';
+  md += '|------|------|--------|----------|------|------|--------|------|\n';
+  keys.forEach(k => {
+    const m = MODELS[k];
+    md += `| ${m.name} | ${m.metrics.MMMU||'—'} | ${m.metrics.DocVQA||'—'} | ${m.metrics.VideoMME||'—'} | ${m.metrics.MMLU||'—'} | ${m.metrics.AIME||'—'} | ${m.licenseType} | ${m.cn?'✅':'❌'} |\n`;
+  });
+  md += '\n> 数据来源：SOTA模型仓 · ' + new Date().toLocaleDateString('zh-CN') + '\n';
+  navigator.clipboard.writeText(md).then(() => {
+    alert('📋 Markdown 已复制到剪贴板！');
+  });
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function renderAll() {
+  renderTable();
+  renderRadar();
+  renderSummary();
+}
+
+function initFromURL() {
+  const params = new URLSearchParams(location.search);
+  if (params.has('models')) {
+    const ms = params.get('models').split(',');
+    document.querySelectorAll('.model-chip').forEach(c => {
+      c.classList.remove('active');
+      activeModels.delete(c.dataset.model);
+    });
+    ms.forEach(m => { if (MODELS[m]) { activeModels.add(m); const chip = document.querySelector(`[data-model="${m}"]`); if (chip) chip.classList.add('active'); } });
+  }
+  if (params.has('scenario')) document.getElementById('scenarioInput').value = params.get('scenario');
+}
+
+initFromURL();
+renderAll();
+</script>
+</body>
+</html>
