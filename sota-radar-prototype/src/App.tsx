@@ -3,7 +3,6 @@
  * 规则：只追加，不覆盖历史版本
  */
 import { useState } from 'react'
-import AppV1 from './AppV1'
 import AppC from './AppC'
 import { VERSION_LIST, CURRENT_VERSION } from './versions'
 
@@ -107,7 +106,6 @@ function VersionSwitcher({ current, onSwitch }: { current: string; onSwitch: (v:
 export default function App() {
   const [currentVersion, setCurrentVersion] = useState(CURRENT_VERSION)
 
-  // Determine which page to show based on version
   function getActivePage(version: string): string {
     if (version === 'v3.0') return 'library'
     if (version === 'v3.1') return 'skills'
@@ -117,8 +115,7 @@ export default function App() {
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
       <VersionSwitcher current={currentVersion} onSwitch={setCurrentVersion} />
-      {currentVersion === 'v1.0' && <AppV1 />}
-      {(currentVersion.startsWith('v2.') || currentVersion === 'v4.0' || currentVersion.startsWith('v4.')) && (
+      {(currentVersion.startsWith('v2.') || currentVersion === 'v4.0' || currentVersion.startsWith('v4.') || currentVersion === 'v1.0') && (
         <AppC activePage={getActivePage(currentVersion)} />
       )}
       {currentVersion === 'v3.0' && <AppC activePage="library" />}

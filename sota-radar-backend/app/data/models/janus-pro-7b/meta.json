@@ -1,0 +1,28 @@
+{
+  "id": "janus-pro-7b",
+  "name": "Janus-Pro-7B",
+  "category": "Unified",
+  "publisher": "字节跳动",
+  "params": "7B",
+  "modality": "text+image",
+  "license": "Apache 2.0",
+  "license_tag": "✅可商用",
+  "benchmarks": [
+    {
+      "name": "MMMU",
+      "score": "~63.2%",
+      "source": "官方评测"
+    }
+  ],
+  "hf_url": "https://huggingface.co/deepseek-ai/Janus-Pro-7B",
+  "release_date": "2026-01",
+  "is_sota": false,
+  "insight": "统一多模态架构，Janus系列最大版本",
+  "tags": [
+    "开源",
+    "统一架构",
+    "Unified"
+  ],
+  "created_at": "2026-04-05T18:11:47.886540",
+  "updated_at": "2026-04-05T18:11:47.886542"
+}

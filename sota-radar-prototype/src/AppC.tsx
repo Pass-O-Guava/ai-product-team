@@ -8,13 +8,13 @@ import SkillsViewer from './SkillsViewer'
 import { truthCases } from './dataA'
 import {
   orgChart,
-  cronSchedule,
   dagNodes,
   buildDagSnapshot,
   todayLog,
   type DagNode,
   type NodeStatus,
 } from './dataC'
+import { triggerFlywheel, fetchStatus, type StatusInfo } from './api'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const c = {
@@ -241,22 +241,47 @@ function OrgChart({ expanded, onToggle }: { expanded: boolean; onToggle: () => v
   )
 }
 
-// ─── Cron schedule cards ──────────────────────────────────────────────────────
-function CronCards() {
+// ─── Cron schedule cards (live data) ────────────────────────────────────────
+function CronCards({ status }: { status: StatusInfo | null }) {
+  const isRunning = status?.state === 'RUNNING' && status?.current_run?.status === 'RUNNING'
+  const runCount = status?.today_runs ?? 0
+  const updated = status?.current_run?.started_at
+    ? new Date(status.current_run.started_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    : '--:--'
+
+  const cards = [
+    {
+      icon: '🕐', label: '早7点', time: '07:00 UTC+8',
+      action: '全量调研扫描 + 质检 + 归档',
+      nextRun: isRunning ? '⏳ 运行中...' : '明天 07:00',
+      live: { runs: runCount, label: '今日触发', color: isRunning ? c.accent : c.muted },
+    },
+    {
+      icon: '🕐', label: '下午1点半', time: '13:30 UTC+8',
+      action: '增量扫描 + 质检反馈循环',
+      nextRun: isRunning ? '⏳ 运行中...' : '今天 13:30',
+      live: { runs: status?.today_models_updated ?? 0, label: '模型更新', color: c.green },
+    },
+  ]
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-      {[cronSchedule.morning, cronSchedule.afternoon].map(cron => (
+      {cards.map(cron => (
         <div key={cron.label} style={{
           background: c.surface, border: `1px solid ${c.border}`,
           borderRadius: 10, padding: '10px 12px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <span style={{ fontSize: 12 }}>🕐</span>
+            <span style={{ fontSize: 12 }}>{cron.icon}</span>
             <span style={{ fontSize: 12, fontWeight: 800, color: c.text }}>{cron.label}</span>
             <span style={{ marginLeft: 'auto', fontSize: 10, color: c.muted }}>{cron.time}</span>
           </div>
           <div style={{ fontSize: 10, color: c.muted, lineHeight: 1.5 }}>{cron.action}</div>
-          <div style={{ fontSize: 9, color: c.accent, marginTop: 4 }}>下次: {cron.nextRun}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+            <div style={{ fontSize: 9, color: cron.live.color }}>{cron.live.label}: {cron.live.runs}</div>
+            <div style={{ fontSize: 9, color: c.accent }}>上次: {updated}</div>
+          </div>
+          <div style={{ fontSize: 9, color: c.accent, marginTop: 2 }}>下次: {cron.nextRun}</div>
         </div>
       ))}
     </div>
@@ -264,7 +289,11 @@ function CronCards() {
 }
 
 // ─── Workflow panel (DAG + trigger button) ──────────────────────────────────
-function WorkflowPanel({ progress, onTrigger }: { progress: number; onTrigger: () => void }) {
+function WorkflowPanel({ progress, onTrigger, toast }: {
+  progress: number
+  onTrigger: () => void
+  toast: { msg: string; type: 'success' | 'error' } | null
+}) {
   const [nodes, setNodes] = useState<DagNode[]>(dagNodes)
 
   useEffect(() => {
@@ -743,11 +772,28 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
   const [animating, setAnimating] = useState(false)
   const [triggerCount, setTriggerCount] = useState(0)
   const [activeTab, setActiveTab] = useState<'home' | 'library' | 'skills'>(activePage as 'home' | 'library' | 'skills')
+  const [status, setStatus] = useState<StatusInfo | null>(null)
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => { setTimeout(() => setMounted(true), 100) }, [])
 
-  function handleTrigger() {
+  // Load live status on mount
+  useEffect(() => {
+    fetchStatus().then(s => { if (s) setStatus(s) }).catch(() => {})
+    // Refresh status every 30s
+    const interval = setInterval(() => {
+      fetchStatus().then(s => { if (s) setStatus(s) }).catch(() => {})
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  function showToast(msg: string, type: 'success' | 'error') {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 4000)
+  }
+
+  async function handleTrigger() {
     if (animating) return
     setAnimating(true)
     setProgress(0)
@@ -761,6 +807,15 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
         setTriggerCount(c => c + 1)
       }
     }, 80)
+    // Call backend API
+    try {
+      const result = await triggerFlywheel()
+      showToast(`🚀 飞轮已触发！run_id: ${result.run_id.slice(0, 8)}...`, 'success')
+      // Refresh status
+      fetchStatus().then(s => { if (s) setStatus(s) }).catch(() => {})
+    } catch {
+      showToast('❌ 触发失败，请稍后重试', 'error')
+    }
   }
 
   return (
@@ -781,6 +836,21 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
           background: 'radial-gradient(circle,#818cf810 0%,transparent 70%)',
         }} />
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 80, right: 24, zIndex: 9999,
+          padding: '10px 18px', borderRadius: 10,
+          background: toast.type === 'success' ? '#052e16' : '#2d0a0a',
+          color: toast.type === 'success' ? '#34d399' : '#f87171',
+          border: `1px solid ${toast.type === 'success' ? '#34d399' : '#f87171'}40`,
+          fontSize: 13, fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          minWidth: 200,
+        }}>
+          {toast.msg}
+        </div>
+      )}
 
       {/* ── Navigation ── */}
       <div style={{
@@ -921,10 +991,10 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
                   组织架构 · Organization
                 </div>
                 <OrgChart expanded={orgExpanded} onToggle={() => setOrgExpanded(v => !v)} />
-                <CronCards />
+                <CronCards status={status} />
               </div>
               {/* Right: DAG Workflow */}
-              <WorkflowPanel progress={progress} onTrigger={handleTrigger} />
+              <WorkflowPanel progress={progress} onTrigger={handleTrigger} toast={toast} />
             </div>
           </div>
 

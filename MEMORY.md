@@ -254,3 +254,30 @@ Qwen3-VL开源状态 / Kimi K2.5发布日期 / Cosmos R2许可证 / Sensenova Ma
 ---
 
 *本文档是 WY 与 @pm 关于团队规范的全部对话总结，2026-04-04 建立，是团队至高工作准则。*
+
+---
+
+## 2026-04-05 下午：SOTA Radar V4 + 后端启动
+
+### 项目结构
+- 前端：/workspace/sota-radar-prototype/（React + Vite）
+- 后端：/workspace/sota-radar-backend/（FastAPI，7860端口）
+- GitHub：github.com/Pass-O-Guava/ai-product-team
+
+### 当前版本
+- 前端：V4.0（https://c7gxqfakw51p.space.minimaxi.com）
+- 后端：v0.1 运行中（7860端口，本地）
+- v0.2：前端接入后端API（子智能体处理中）
+
+### 团队角色
+- PM：AI PM（我）
+- 调研团队（6人）：子智能体
+- 质检团队（3人）：子智能体
+- 文档管理团队（2人）：子智能体
+- GitHub Archiver：Skill驱动（/workspace/skills/github-archiver/）
+
+### 飞书备份文档
+- https://feishu.cn/docx/GDwmdSvc8ot47GxUUIhc1Pz3nUf
+
+### 后端端口问题
+⚠️ 7860端口无法从外部访问，v0.2采用静态数据fallback方案
