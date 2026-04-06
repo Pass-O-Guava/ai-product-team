@@ -118,5 +118,5 @@ export const VERSION_LIST: VersionInfo[] = [
   // ════════════════════════════════════════════════════════════
 ]
 
-export const CURRENT_VERSION = 'v4.0'
-export const CURRENT_LABEL = 'V4.0'
+export const CURRENT_VERSION = 'v5.0'
+export const CURRENT_LABEL = 'V5.0'
