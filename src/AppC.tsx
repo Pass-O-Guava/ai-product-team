@@ -18,7 +18,7 @@ import {
   triggerFlywheel,
   fetchStatus,
   fetchRunStatus,
-  fetchEvolutionStatus,
+  fetchEvolutionHistory,
   type StatusInfo,
   type FlywheelRun,
 } from './api'
@@ -824,6 +824,7 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
       showToast(`🚀 飞轮已触发！run_id: ${runId.slice(0, 18)}…`, 'success')
     } catch (err) {
       showToast(`❌ 触发失败：${err}`, 'error')
+      setAnimating(false)
       return
     }
 
@@ -849,6 +850,7 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
     }))
 
     // 轮询 run 状态（每 3 秒），实时更新 DAG 和进度条
+    let pollFailCount = 0
     timerRef.current = setInterval(async () => {
       try {
         const run = await fetchRunStatus(runId)
@@ -878,9 +880,9 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
           if (run.status === 'COMPLETED') {
             // 更新 Skills 自进化展示
             try {
-              const evo = await fetchEvolutionStatus()
+              const evo = await fetchEvolutionHistory()
               if (evo) {
-                const latestEvo = evo.recent_evolutions?.[0]
+                const latestEvo = evo.iterations?.[0]
                 if (run.results?.evolution_triggered !== false) {
                   showToast(
                     `✅ 第${run.results?.iteration ?? '?'}轮完成！`
@@ -896,6 +898,12 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
         }
       } catch {
         // 轮询错误不弹 toast，避免刷屏
+        pollFailCount++
+        if (pollFailCount >= 10) {
+          clearInterval(timerRef.current!)
+          setAnimating(false)
+          showToast('⚠️ 后端连接超时（5分钟），请检查 FastAPI 是否在 7860 端口运行', 'error')
+        }
       }
     }, 3000)
   }

@@ -165,3 +165,24 @@ export async function fetchEvolutionStatus(): Promise<EvolutionStatus | null> {
     return null
   }
 }
+
+
+// ─── Skills 自进化历史 ─────────────────────────────────────────────────────────
+
+export async function fetchEvolutionHistory(limit = 20): Promise<{
+  iterations: {
+    id: string; run_id: string; iteration: number
+    trigger_reason: string
+    patterns_found: { type: string; description: string; count: number }[]
+    skills_updated: string[]
+    logged_at: string
+  }[]
+  total: number
+}> {
+  try {
+    const evo = await apiFetch(`/api/v1/flywheel/evolution/status`)
+    return { iterations: (evo?.recent_evolutions ?? []), total: evo?.recent_evolutions?.length ?? 0 }
+  } catch {
+    return { iterations: [], total: 0 }
+  }
+}
