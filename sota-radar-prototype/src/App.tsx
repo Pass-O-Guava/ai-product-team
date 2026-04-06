@@ -37,7 +37,7 @@ function VersionSwitcher({ current, onSwitch }: { current: string; onSwitch: (v:
           borderRadius: 16, padding: '14px 14px',
           boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
           display: 'flex', flexDirection: 'column', gap: 6,
-          minWidth: 360,
+          minWidth: 340,
         }}>
           <div style={{
             fontSize: 9, color: '#4b5563', fontWeight: 700,
@@ -72,7 +72,7 @@ function VersionSwitcher({ current, onSwitch }: { current: string; onSwitch: (v:
                   background: v.color + (isActive ? '25' : '15'),
                   color: v.color,
                   border: `1px solid ${v.color}${isActive ? '60' : '30'}`,
-                  minWidth: 44, textAlign: 'center',
+                  minWidth: 40, textAlign: 'center',
                   letterSpacing: '0.05em',
                 }}>
                   {v.label}
@@ -104,27 +104,25 @@ function VersionSwitcher({ current, onSwitch }: { current: string; onSwitch: (v:
   )
 }
 
-// 根据版本号确定activePage
-function getActivePage(version: string): string {
-  if (version === 'v3.0') return 'library'
-  if (version === 'v3.1') return 'skills'
-  return 'home'
-}
-
 export default function App() {
   const [currentVersion, setCurrentVersion] = useState(CURRENT_VERSION)
+
+  // Determine which page to show based on version
+  function getActivePage(version: string): 'home' | 'library' | 'skills' {
+    if (version === 'v3.0') return 'library'
+    if (version === 'v3.1') return 'skills'
+    return 'home'
+  }
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
       <VersionSwitcher current={currentVersion} onSwitch={setCurrentVersion} />
-
-      {/* 早期演示版本 */}
       {currentVersion === 'v1.0' && <AppV1 />}
-
-      {/* 主版本：V2.x ~ V8.x 均使用 AppC（首页 + 标签导航） */}
-      {currentVersion !== 'v1.0' && (
-        <AppC version={currentVersion} activePage={getActivePage(currentVersion) as any} />
+      {(currentVersion.startsWith('v2.') || currentVersion === 'v4.0' || currentVersion.startsWith('v4.')) && (
+        <AppC activePage={getActivePage(currentVersion)} />
       )}
+      {currentVersion === 'v3.0' && <AppC activePage="library" />}
+      {currentVersion === 'v3.1' && <AppC activePage="skills" />}
     </div>
   )
 }
