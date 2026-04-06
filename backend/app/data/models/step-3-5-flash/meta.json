@@ -1,0 +1,21 @@
+{
+  "id": "step-3-5-flash",
+  "name": "Step-3.5-Flash",
+  "category": "Embedding",
+  "publisher": "阶跃星辰",
+  "params": "-",
+  "modality": "text-only",
+  "license": "unknown",
+  "license_tag": "❌不可商用",
+  "benchmarks": [],
+  "hf_url": "",
+  "release_date": "2026-03",
+  "is_sota": false,
+  "insight": "阶跃星辰Embedding，许可证待核实",
+  "tags": [
+    "国产",
+    "Embedding"
+  ],
+  "created_at": "2026-04-05T18:11:47.887323",
+  "updated_at": "2026-04-05T18:11:47.887325"
+}

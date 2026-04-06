@@ -1,0 +1,28 @@
+{
+  "id": "qwen3-6-plus",
+  "name": "Qwen3.6-Plus",
+  "category": "VLM",
+  "publisher": "阿里巴巴",
+  "params": "~140B",
+  "modality": "text+image（待核实）",
+  "license": "Tongyi Qianwen License",
+  "license_tag": "⚠️需申请",
+  "benchmarks": [
+    {
+      "name": "MMLU",
+      "score": "~89%",
+      "source": "官方评测"
+    }
+  ],
+  "hf_url": "https://huggingface.co/Qwen/Qwen3.6-Plus",
+  "release_date": "2026-03",
+  "is_sota": false,
+  "insight": "Qwen3.6多模态版本，模态待官方确认",
+  "tags": [
+    "开源",
+    "国产",
+    "VLM"
+  ],
+  "created_at": "2026-04-05T18:11:47.886410",
+  "updated_at": "2026-04-05T18:11:47.886414"
+}

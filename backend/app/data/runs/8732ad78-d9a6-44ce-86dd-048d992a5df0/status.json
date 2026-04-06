@@ -1,0 +1,10 @@
+{
+  "run_id": "8732ad78-d9a6-44ce-86dd-048d992a5df0",
+  "status": "RUNNING",
+  "started_at": "2026-04-05T18:14:46.991139",
+  "finished_at": null,
+  "progress": 0.0,
+  "steps": [
+    {
+      "step": "trigger",
+      "started_at": 

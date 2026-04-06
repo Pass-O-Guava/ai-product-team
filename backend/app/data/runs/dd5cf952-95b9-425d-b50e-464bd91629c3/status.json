@@ -1,0 +1,67 @@
+{
+  "run_id": "dd5cf952-95b9-425d-b50e-464bd91629c3",
+  "status": "COMPLETED",
+  "started_at": "2026-04-05T18:17:49.997063",
+  "finished_at": "2026-04-05T18:17:49.999419",
+  "progress": 1.0,
+  "steps": [
+    {
+      "step": "trigger",
+      "started_at": "2026-04-05T18:17:49.997066",
+      "finished_at": "2026-04-05T18:17:49.997308",
+      "status": "done",
+      "message": "Started with 2 models"
+    },
+    {
+      "step": "dispatch",
+      "started_at": "2026-04-05T18:17:49.997324",
+      "finished_at": "2026-04-05T18:17:49.997605",
+      "status": "done",
+      "message": "Tasks dispatched to scouts"
+    },
+    {
+      "step": "research",
+      "started_at": "2026-04-05T18:17:49.997608",
+      "finished_at": "2026-04-05T18:17:49.997996",
+      "status": "done",
+      "message": "Researched 2 models"
+    },
+    {
+      "step": "qc_review",
+      "started_at": "2026-04-05T18:17:49.997998",
+      "finished_at": "2026-04-05T18:17:49.998362",
+      "status": "done",
+      "message": "QC review complete"
+    },
+    {
+      "step": "archive",
+      "started_at": "2026-04-05T18:17:49.998366",
+      "finished_at": "2026-04-05T18:17:49.998648",
+      "status": "done",
+      "message": "Synced to git"
+    },
+    {
+      "step": "self_review",
+      "started_at": "2026-04-05T18:17:49.998650",
+      "finished_at": "2026-04-05T18:17:49.998901",
+      "status": "done",
+      "message": "Skill self-improvement complete"
+    },
+    {
+      "step": "complete",
+      "started_at": "2026-04-05T18:17:49.998902",
+      "finished_at": "2026-04-05T18:17:49.999141",
+      "status": "done",
+      "message": "Report generated"
+    }
+  ],
+  "results": {
+    "model_ids": [
+      "qwq-32b",
+      "glm-5v-turbo"
+    ],
+    "models_updated": 2,
+    "finished_at": "2026-04-05T18:17:49.999315"
+  },
+  "errors": []
+}
