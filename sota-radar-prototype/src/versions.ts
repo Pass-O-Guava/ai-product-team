@@ -119,4 +119,4 @@ export const VERSION_LIST: VersionInfo[] = [
 ]
 
 export const CURRENT_VERSION = 'v6.0'
-export const CURRENT_LABEL = 'V5.0'
+export const CURRENT_LABEL = 'V6.0'
