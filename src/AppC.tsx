@@ -778,6 +778,11 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
 
   useEffect(() => { setTimeout(() => setMounted(true), 100) }, [])
 
+  // Fix: 同步父组件版本切换导致的 activePage 变化到内部 activeTab
+  useEffect(() => {
+    setActiveTab(activePage as 'home' | 'library' | 'skills')
+  }, [activePage])
+
   // Load live status on mount
   useEffect(() => {
     fetchStatus().then(s => { if (s) setStatus(s) }).catch(() => {})
