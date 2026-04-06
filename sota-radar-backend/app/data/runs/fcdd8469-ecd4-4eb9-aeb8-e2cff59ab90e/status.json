@@ -1,0 +1,64 @@
+{
+  "run_id": "fcdd8469-ecd4-4eb9-aeb8-e2cff59ab90e",
+  "status": "COMPLETED",
+  "started_at": "2026-04-06T01:46:45.268033",
+  "finished_at": "2026-04-06T01:46:45.300099",
+  "progress": 1.0,
+  "steps": [
+    {
+      "step": "trigger",
+      "started_at": "2026-04-06T01:46:45.268035",
+      "finished_at": "2026-04-06T01:46:45.268252",
+      "status": "done",
+      "message": "Started with 0 models"
+    },
+    {
+      "step": "dispatch",
+      "started_at": "2026-04-06T01:46:45.268254",
+      "finished_at": "2026-04-06T01:46:45.269131",
+      "status": "done",
+      "message": "Tasks dispatched to scouts"
+    },
+    {
+      "step": "research",
+      "started_at": "2026-04-06T01:46:45.269134",
+      "finished_at": "2026-04-06T01:46:45.269362",
+      "status": "done",
+      "message": "No models to research"
+    },
+    {
+      "step": "qc_review",
+      "started_at": "2026-04-06T01:46:45.269364",
+      "finished_at": "2026-04-06T01:46:45.269617",
+      "status": "done",
+      "message": "QC review complete"
+    },
+    {
+      "step": "archive",
+      "started_at": "2026-04-06T01:46:45.269619",
+      "finished_at": "2026-04-06T01:46:45.269849",
+      "status": "done",
+      "message": "Synced to git"
+    },
+    {
+      "step": "self_review",
+      "started_at": "2026-04-06T01:46:45.269850",
+      "finished_at": "2026-04-06T01:46:45.273776",
+      "status": "done",
+      "message": "Skill self-improvement complete"
+    },
+    {
+      "step": "complete",
+      "started_at": "2026-04-06T01:46:45.273778",
+      "finished_at": "2026-04-06T01:46:45.284798",
+      "status": "done",
+      "message": "Report generated"
+    }
+  ],
+  "results": {
+    "model_ids": [],
+    "models_updated": 0,
+    "finished_at": "2026-04-06T01:46:45.299984"
+  },
+  "errors": []
+}

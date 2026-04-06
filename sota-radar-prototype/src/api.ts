@@ -3,7 +3,7 @@
  */
 import { staticModels } from './dataLib'
 
-const API_BASE = 'http://localhost:7860'
+const API_BASE = 'http://localhost:7861'
 
 export interface ModelSummary {
   id: string; name: string; category: string; publisher: string

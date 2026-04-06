@@ -1,0 +1,101 @@
+{
+  "updated_at": "2026-04-06T01:43:00Z",
+  "sprints": [
+    {
+      "id": "v5.x",
+      "name": "V5.x: 前后端集成",
+      "tasks": [
+        {
+          "id": "v5.1",
+          "title": "后端v0.1: FastAPI核心+知识存储+REST API",
+          "owner": "子智能体-A",
+          "status": "已完成",
+          "created_at": "2026-04-05T10:00:00Z",
+          "started_at": "2026-04-05T10:05:00Z",
+          "finished_at": "2026-04-05T10:18:00Z",
+          "duration_min": 13,
+          "version": "V5.0",
+          "notes": "FastAPI运行7860端口，12模型数据，API全部调通"
+        },
+        {
+          "id": "v5.2",
+          "title": "前端API接入: 版本切换器+触发按钮+状态面板",
+          "owner": "AI PM",
+          "status": "已完成",
+          "created_at": "2026-04-05T10:20:00Z",
+          "started_at": "2026-04-05T10:21:00Z",
+          "finished_at": "2026-04-05T12:05:00Z",
+          "duration_min": 104,
+          "version": "V5.0",
+          "notes": "AppC重写，版本切换器真实有效，API fallback，Toast通知"
+        },
+        {
+          "id": "v5.3",
+          "title": "GitHub Archiver: 提交全部代码+CI/CD+README",
+          "owner": "子智能体-B",
+          "status": "已完成",
+          "created_at": "2026-04-05T10:20:00Z",
+          "started_at": "2026-04-05T10:22:00Z",
+          "finished_at": "2026-04-05T11:30:00Z",
+          "duration_min": 68,
+          "version": "V5.0",
+          "notes": "4条commit推送GitHub，backup.yml+version-tag.yml配置完成"
+        }
+      ]
+    },
+    {
+      "id": "v6.x",
+      "name": "V6.x: OpenClaw Agent真实触发",
+      "tasks": [
+        {
+          "id": "v6.1",
+          "title": "V6.0: OpenClaw CLI接入+真实飞轮触发",
+          "owner": "子智能体-3",
+          "status": "进行中",
+          "created_at": "2026-04-06T01:36:00Z",
+          "started_at": "2026-04-06T01:36:00Z",
+          "finished_at": null,
+          "duration_min": null,
+          "version": "V6.0",
+          "notes": "子智能体运行中，接入OpenClaw CLI，线程化触发"
+        }
+      ]
+    },
+    {
+      "id": "v7.x",
+      "name": "V7.x: SSE实时状态推送",
+      "tasks": [
+        {
+          "id": "v7.1",
+          "title": "V7.0: SSE实时推送前后端",
+          "owner": "待分配",
+          "status": "待开始",
+          "created_at": "2026-04-06T01:36:00Z",
+          "started_at": null,
+          "finished_at": null,
+          "duration_min": null,
+          "version": "V7.0",
+          "notes": "V6.0完成后开始"
+        }
+      ]
+    },
+    {
+      "id": "v8.x",
+      "name": "V8.x: Cron自动化+GitHub同步",
+      "tasks": [
+        {
+          "id": "v8.1",
+          "title": "V8.0: Cron定时任务+GitHub自动同步",
+          "owner": "待分配",
+          "status": "待开始",
+          "created_at": "2026-04-06T01:36:00Z",
+          "started_at": null,
+          "finished_at": null,
+          "duration_min": null,
+          "version": "V8.0",
+          "notes": "V7.0完成后开始"
+        }
+      ]
+    }
+  ]
+}

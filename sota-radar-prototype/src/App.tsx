@@ -123,7 +123,7 @@ export default function App() {
 
       {/* 主版本：V2.x ~ V8.x 均使用 AppC（首页 + 标签导航） */}
       {currentVersion !== 'v1.0' && (
-        <AppC activePage={getActivePage(currentVersion)} />
+        <AppC version={currentVersion} activePage={getActivePage(currentVersion) as any} />
       )}
     </div>
   )

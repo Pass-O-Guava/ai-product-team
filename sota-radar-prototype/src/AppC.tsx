@@ -1,173 +1,121 @@
 /**
- * Version C v4 — 前沿科技 · 多智能体架构 + 完整证据链
- * Main dashboard: Hero + Org chart + DAG workflow + Truth Filter + Closed Loop
+ * SOTA Radar — 主仪表盘 (AppC)
+ * V4.0~V8.0 均使用此组件，版本切换控制功能可用性
  */
 import { useState, useEffect, useRef } from 'react'
+import { truthCases } from './dataA'
+import { orgChart, cronSchedule, dagNodes, buildDagSnapshot, todayLog, type DagNode, type NodeStatus } from './dataC'
 import ModelLibrary from './ModelLibrary'
 import SkillsViewer from './SkillsViewer'
-import { truthCases } from './dataA'
-import {
-  orgChart,
-  dagNodes,
-  buildDagSnapshot,
-  todayLog,
-  type DagNode,
-  type NodeStatus,
-} from './dataC'
-import { triggerFlywheel, fetchStatus, type StatusInfo } from './api'
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const c = {
-  bg: '#030712',
-  surface: '#0f172a',
-  card: '#111827',
-  border: '#1e293b',
-  text: '#f1f5f9',
-  muted: '#64748b',
-  accent: '#38bdf8',
-  accent2: '#818cf8',
-  green: '#34d399',
-  red: '#f87171',
-  amber: '#fbbf24',
-  pink: '#f472b6',
-  purple: '#a78bfa',
+// 外部传入的版本号，用于条件渲染
+interface AppCProps {
+  version?: string  // e.g. 'v4.0', 'v5.0', 'v6.0'
+  activePage?: 'home' | 'library' | 'skills'
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+const c = {
+  bg: '#030712', surface: '#0f172a', card: '#111827',
+  border: '#1e293b', text: '#f1f5f9', muted: '#64748b',
+  accent: '#38bdf8', accent2: '#818cf8', green: '#34d399',
+  red: '#f87171', amber: '#fbbf24', pink: '#f472b6', purple: '#a78bfa',
+}
+
+// ─── 工具函数 ───────────────────────────────────────────────
+function versionGte(a: string, b: string): boolean {
+  const parse = (v: string) => {
+    const m = v.replace('v','').split('.')
+    return parseInt(m[0]) * 100 + parseInt(m[1] || '0')
+  }
+  return parse(a) >= parse(b)
+}
+
+// ─── Status badge ───────────────────────────────────────────────
 function StatusBadge({ status }: { status: NodeStatus }) {
   const cfg: Record<NodeStatus, { color: string; bg: string; label: string }> = {
-    idle:    { color: c.muted,  bg: '#1e293b',  label: '待机' },
-    pending: { color: c.muted,  bg: '#1e293b',  label: '等待' },
+    idle: { color: c.muted, bg: '#1e293b', label: '待机' },
+    pending: { color: c.muted, bg: '#1e293b', label: '等待' },
     running: { color: c.accent, bg: '#0c2645', label: '进行中' },
-    done:    { color: c.green,  bg: '#052e16', label: '完成' },
-    rejected:{ color: c.red,    bg: '#2d0a0a', label: '拒绝' },
+    done: { color: c.green, bg: '#052e16', label: '完成' },
+    rejected: { color: c.red, bg: '#2d0a0a', label: '拒绝' },
   }
   const x = cfg[status]
   return (
-    <span style={{
-      fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100,
-      background: x.bg, color: x.color, border: `1px solid ${x.color}40`,
-    }}>
+    <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: x.bg, color: x.color, border: `1px solid ${x.color}40` }}>
       {status === 'running' ? `⚡ ${x.label}` : x.label}
     </span>
   )
 }
 
-// ─── DAG Visualizer ───────────────────────────────────────────────────────────
+// ─── DAG Visualizer ────────────────────────────────────────────
 function DAGView({ nodes }: { nodes: DagNode[] }) {
-  const nodeW = 78
-  const nodeH = 48
-
-  // Manual layout: {nodeId: {x, y}}
-  const layout: Record<string, { x: number; y: number }> = {
-    trigger: { x: 30,  y: 90  },
-    '分配':  { x: 130, y: 30  },
-    scout:   { x: 230, y: 30  },
-    qc:      { x: 330, y: 30  },
-    '反馈':  { x: 430, y: 130 },
-    '归档':  { x: 430, y: 30  },
-    '自审':  { x: 530, y: 30  },
-    '完成':  { x: 620, y: 30  },
+  const nodeW = 78; const nodeH = 48
+  const p = (id: string) => {
+    const m: Record<string, { x: number; y: number }> = {
+      trigger: { x: 30, y: 90 }, '分配': { x: 130, y: 30 },
+      scout: { x: 230, y: 30 }, qc: { x: 330, y: 30 },
+      '反馈': { x: 430, y: 130 }, '归档': { x: 430, y: 30 },
+      '自审': { x: 530, y: 30 }, '完成': { x: 620, y: 30 },
+    }
+    return m[id]
   }
-
-  const cx = (id: string) => layout[id].x + nodeW / 2
-  const cy = (id: string) => layout[id].y + nodeH / 2
+  const cx = (id: string) => p(id).x + nodeW / 2
+  const cy = (id: string) => p(id).y + nodeH / 2
 
   const edges = [
-    { from: 'trigger', to: '分配',  label: '开始',  color: c.border, dashed: false },
-    { from: '分配',     to: 'scout', label: '分发',  color: c.border, dashed: false },
-    { from: 'scout',   to: 'qc',    label: '提交',  color: c.border, dashed: false },
-    { from: 'qc',      to: '归档',  label: '通过',  color: c.border, dashed: false },
-    { from: 'qc',      to: '反馈',  label: '拒绝',  color: c.red,    dashed: true  },
-    { from: '反馈',    to: 'scout', label: '打回',  color: c.red,    dashed: true  },
-    { from: '归档',    to: '自审',  label: '同步',  color: c.border, dashed: false },
-    { from: '自审',    to: '完成',  label: '进化',  color: c.border, dashed: false },
-    { from: '完成',    to: 'trigger', label: '等待下次', color: c.muted, dashed: true },
+    { from: 'trigger', to: '分配', label: '开始' },
+    { from: '分配', to: 'scout', label: '分发' },
+    { from: 'scout', to: 'qc', label: '提交' },
+    { from: 'qc', to: '归档', label: '通过' },
+    { from: 'qc', to: '反馈', label: '拒绝', color: c.red, dashed: true },
+    { from: '反馈', to: 'scout', label: '打回', color: c.red, dashed: true },
+    { from: '归档', to: '自审', label: '同步' },
+    { from: '自审', to: '完成', label: '进化' },
+    { from: '完成', to: 'trigger', label: '等待下次', color: c.muted, dashed: true },
   ]
 
   return (
     <svg width={680} height={220} style={{ overflow: 'visible' }}>
       <defs>
-        <marker id="arr-norm" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-          <polygon points="0 0,8 3,0 6" fill={c.border} />
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill={c.accent} opacity="0.7" />
         </marker>
-        <marker id="arr-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-          <polygon points="0 0,8 3,0 6" fill={c.red} />
+        <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill={c.red} opacity="0.7" />
         </marker>
-        <marker id="arr-gray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-          <polygon points="0 0,8 3,0 6" fill={c.muted} />
+        <marker id="arrowGray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill={c.muted} opacity="0.5" />
         </marker>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
       </defs>
-
       {edges.map((e, i) => {
-        let d: string
-        if (e.from === '反馈' && e.to === 'scout') {
-          // Curve from feedback back up to scout
-          d = `M${cx(e.from)},${cy(e.from)} C${cx(e.from)},${cy(e.from) - 80} ${cx(e.to)},${cy(e.to) - 80} ${cx(e.to) + nodeW / 2},${cy(e.to) + nodeH / 2}`
-        } else if (e.from === '完成' && e.to === 'trigger') {
-          // Curve from 完成 back to trigger
-          const tp = layout['trigger']
-          d = `M${cx(e.from)},${cy(e.from)} C${cx(e.from)},${cy(e.from) + 80} ${tp.x + nodeW / 2},${tp.y + nodeH + 80} ${tp.x + nodeW / 2},${tp.y + nodeH}`
-        } else {
-          d = `M${cx(e.from)},${cy(e.from) - nodeH / 2} L${cx(e.to)},${cy(e.to) + nodeH / 2}`
-        }
-        const mk = e.color === c.red ? 'url(#arr-red)' : e.color === c.muted ? 'url(#arr-gray)' : 'url(#arr-norm)'
-        const midX = (cx(e.from) + cx(e.to)) / 2
-        const midY = (cy(e.from) + cy(e.to)) / 2
+        const sx = cx(e.from), sy = cy(e.from), ex = cx(e.to), ey = cy(e.to)
+        const mx = (sx + ex) / 2, my = (sy + ey) / 2
+        const c1x = mx, c1y = sy, c2x = mx, c2y = ey
+        const color = e.color || c.accent
+        const marker = e.dashed ? (e.color === c.red ? 'url(#arrowRed)' : 'url(#arrowGray)') : 'url(#arrow)'
         return (
           <g key={i}>
-            <path d={d} stroke={e.color} strokeWidth={1.5} fill="none"
-              strokeDasharray={e.dashed ? '4 3' : undefined}
-              markerEnd={mk} />
-            {e.label && (
-              <text x={midX} y={midY - 4} textAnchor="middle" fill={e.color}
-                fontSize="9" fontWeight={600}>
-                {e.label}
-              </text>
-            )}
+            <path d={`M ${sx} ${sy} C ${c1x} ${c1y} ${c2x} ${c2y} ${ex} ${ey}`}
+              stroke={color} strokeWidth={e.dashed ? 1.5 : 2}
+              strokeDasharray={e.dashed ? '5,4' : undefined}
+              fill="none" markerEnd={marker} opacity={e.dashed ? 0.6 : 0.8} />
+            <text x={mx} y={my - 6} textAnchor="middle" fill={color} fontSize={9} opacity={0.9}>{e.label}</text>
           </g>
         )
       })}
-
       {nodes.map(n => {
-        const pos = layout[n.id]
-        if (!pos) return null
-        const isR = n.status === 'running'
-        const isD = n.status === 'done'
-        const isJ = n.status === 'rejected'
-        const bc  = isR ? c.accent : isD ? c.green : isJ ? c.red : c.border
-
+        const pos = p(n.id); if (!pos) return null
+        const isRejected = n.status === 'rejected'
         return (
-          <g key={n.id} filter={isR ? 'url(#glow)' : undefined}>
-            {isR && (
-              <rect x={pos.x - 2} y={pos.y - 2} width={nodeW + 4} height={nodeH + 4}
-                rx={10} fill="none" stroke={c.accent} strokeWidth={1.5}
-                strokeDasharray="4 2" />
-            )}
-            <rect x={pos.x} y={pos.y} width={nodeW} height={nodeH} rx={8}
-              fill={c.card} stroke={bc} strokeWidth={isR ? 2 : 1} />
-            {isR && (
-              <rect x={pos.x} y={pos.y} width={nodeW} height={3} rx={2}
-                fill={c.accent} />
-            )}
-            <text x={pos.x + nodeW / 2} y={pos.y + 18} textAnchor="middle"
-              fill={c.text} fontSize={10} fontWeight={700}>
-              {n.label}
-            </text>
-            <text x={pos.x + nodeW / 2} y={pos.y + 30} textAnchor="middle"
-              fill={c.muted} fontSize={8}>
-              {n.sub}
-            </text>
-            <text x={pos.x + nodeW / 2} y={pos.y + 43} textAnchor="middle">
-              <StatusBadge status={n.status} />
-            </text>
+          <g key={n.id} style={{ cursor: 'default' }}>
+            <rect x={pos.x} y={pos.y} width={nodeW} height={nodeH} rx={10}
+              fill={isRejected ? c.red + '22' : c.card}
+              stroke={isRejected ? c.red + '60' : c.border}
+              strokeWidth={1.5} />
+            <text x={pos.x + nodeW / 2} y={pos.y + nodeH / 2 - 4} textAnchor="middle"
+              fill={isRejected ? c.red : c.accent} fontSize={11} fontWeight={700}>{n.label}</text>
+            <text x={pos.x + nodeW / 2} y={pos.y + nodeH / 2 + 12} textAnchor="middle"
+              fill={c.muted} fontSize={9}>{n.sub}</text>
           </g>
         )
       })}
@@ -175,61 +123,49 @@ function DAGView({ nodes }: { nodes: DagNode[] }) {
   )
 }
 
-// ─── Org Chart ────────────────────────────────────────────────────────────────
+// ─── Org Chart ─────────────────────────────────────────────────
 function OrgChart({ expanded, onToggle }: { expanded: boolean; onToggle: () => void }) {
   const { pm, teams } = orgChart
   return (
     <div style={{ marginBottom: 8 }}>
-      {/* PM + Coordinator node */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: c.accent + '25', border: `1.5px solid ${c.accent}60`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18,
-        }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: c.pink + '25', border: `1.5px solid ${c.pink}60`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
           {pm.icon}
         </div>
         <div>
           <div style={{ fontSize: 13, fontWeight: 800, color: c.text }}>
-            {pm.name}{' '}
-            <span style={{ fontSize: 10, color: c.accent, fontWeight: 600 }}>{pm.role}</span>
+            {pm.name} <span style={{ fontSize: 10, color: c.pink, fontWeight: 600 }}>{pm.role}</span>
           </div>
           <div style={{ fontSize: 10, color: c.muted }}>{pm.desc}</div>
         </div>
-        <button
-          onClick={onToggle}
-          style={{
-            marginLeft: 'auto', background: c.surface, border: `1px solid ${c.border}`,
-            borderRadius: 8, padding: '4px 10px', color: c.accent, fontSize: 11,
-            cursor: 'pointer',
-          }}
-        >
+        <button onClick={onToggle} style={{
+          marginLeft: 'auto', background: c.surface, border: `1px solid ${c.border}`,
+          borderRadius: 8, padding: '4px 10px', color: c.accent, fontSize: 11, cursor: 'pointer',
+        }}>
           {expanded ? '收起 ▲' : '展开 ▼'}
         </button>
       </div>
-
-      {/* Three team columns */}
+      {expanded && <div style={{ width: 18, height: 1, background: c.border, marginBottom: 10 }} />}
       {expanded && (
-        <div style={{ paddingLeft: 12, borderLeft: `2px solid ${c.accent}30` }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
           {teams.map(t => (
             <div key={t.team} style={{
-              background: c.surface, border: `1px solid ${c.border}`,
-              borderRadius: 10, padding: '10px 12px', marginBottom: 8,
+              background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: '12px',
             }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: t.color, marginBottom: 6 }}>
-                {t.icon} {t.team}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                <span style={{ fontSize: 14 }}>{t.icon}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: t.color }}>{t.team}</span>
+                <span style={{ fontSize: 9, color: c.muted }}>({t.members.length})</span>
               </div>
               {t.members.map(m => (
-                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                  <div style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: m.status === 'running' ? c.green : c.muted,
-                    boxShadow: m.status === 'running' ? `0 0 6px ${c.green}` : 'none',
-                  }} />
+                <div key={m.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0',
+                  borderBottom: `1px solid ${c.border}30`,
+                }}>
+                  <StatusBadge status={m.status as NodeStatus} />
                   <div>
-                    <span style={{ fontSize: 11, color: c.text, fontWeight: 600 }}>{m.name}</span>
-                    <span style={{ fontSize: 9, color: c.muted }}> · {m.role}</span>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: c.text }}>{m.name}</div>
+                    <div style={{ fontSize: 9, color: c.muted }}>{m.role}</div>
                   </div>
                 </div>
               ))}
@@ -241,666 +177,437 @@ function OrgChart({ expanded, onToggle }: { expanded: boolean; onToggle: () => v
   )
 }
 
-// ─── Cron schedule cards (live data) ────────────────────────────────────────
-function CronCards({ status }: { status: StatusInfo | null }) {
-  const isRunning = status?.state === 'RUNNING' && status?.current_run?.status === 'RUNNING'
-  const runCount = status?.today_runs ?? 0
-  const updated = status?.current_run?.started_at
-    ? new Date(status.current_run.started_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-    : '--:--'
-
-  const cards = [
-    {
-      icon: '🕐', label: '早7点', time: '07:00 UTC+8',
-      action: '全量调研扫描 + 质检 + 归档',
-      nextRun: isRunning ? '⏳ 运行中...' : '明天 07:00',
-      live: { runs: runCount, label: '今日触发', color: isRunning ? c.accent : c.muted },
-    },
-    {
-      icon: '🕐', label: '下午1点半', time: '13:30 UTC+8',
-      action: '增量扫描 + 质检反馈循环',
-      nextRun: isRunning ? '⏳ 运行中...' : '今天 13:30',
-      live: { runs: status?.today_models_updated ?? 0, label: '模型更新', color: c.green },
-    },
-  ]
-
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-      {cards.map(cron => (
-        <div key={cron.label} style={{
-          background: c.surface, border: `1px solid ${c.border}`,
-          borderRadius: 10, padding: '10px 12px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <span style={{ fontSize: 12 }}>{cron.icon}</span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: c.text }}>{cron.label}</span>
-            <span style={{ marginLeft: 'auto', fontSize: 10, color: c.muted }}>{cron.time}</span>
-          </div>
-          <div style={{ fontSize: 10, color: c.muted, lineHeight: 1.5 }}>{cron.action}</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-            <div style={{ fontSize: 9, color: cron.live.color }}>{cron.live.label}: {cron.live.runs}</div>
-            <div style={{ fontSize: 9, color: c.accent }}>上次: {updated}</div>
-          </div>
-          <div style={{ fontSize: 9, color: c.accent, marginTop: 2 }}>下次: {cron.nextRun}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ─── Workflow panel (DAG + trigger button) ──────────────────────────────────
-function WorkflowPanel({ progress, onTrigger, toast }: {
-  progress: number
-  onTrigger: () => void
-  toast: { msg: string; type: 'success' | 'error' } | null
-}) {
-  const [nodes, setNodes] = useState<DagNode[]>(dagNodes)
+// ─── Cron Cards ────────────────────────────────────────────────
+function CronCards({ version }: { version: string }) {
+  const [statusData, setStatusData] = useState<any>(null)
+  const [triggerResult, setTriggerResult] = useState<{type: 'success'|'error'; msg: string} | null>(null)
+  const [loading, setLoading] = useState(false)
+  const hasBackend = versionGte(version, 'v5.0')
 
   useEffect(() => {
-    setNodes(buildDagSnapshot(progress))
-  }, [progress])
+    if (!hasBackend) return
+    const poll = async () => {
+      try {
+        const r = await fetch('http://localhost:7860/api/v1/status/current')
+        if (r.ok) setStatusData(await r.json())
+      } catch {}
+    }
+    poll()
+    const id = setInterval(poll, 15000)
+    return () => clearInterval(id)
+  }, [hasBackend])
 
-  const isRunning = progress > 0 && progress < 100
+  function handleTrigger() {
+    if (!hasBackend) return
+    setLoading(true)
+    fetch('http://localhost:7860/api/v1/flywheel/trigger', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' })
+      .then(r => r.json())
+      .then(d => setTriggerResult({ type: 'success', msg: `🚀 飞轮已触发！run_id: ${d.run_id}` }))
+      .catch(() => setTriggerResult({ type: 'error', msg: '❌ 触发失败，请稍后重试' }))
+      .finally(() => setLoading(false))
+      setTimeout(() => setTriggerResult(null), 5000)
+  }
 
   return (
-    <div style={{
-      background: c.surface, border: `1px solid ${c.border}`,
-      borderRadius: 14, padding: 16,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: c.text }}>
-            模型知识飞轮工作流 · Workflow Engine
-          </div>
-          <div style={{ fontSize: 11, color: c.muted }}>支持循环的 DAG（有向有环图）</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Progress bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 80, height: 4, background: c.border, borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{
-                width: `${progress}%`, height: '100%',
-                background: progress < 100 ? c.accent : c.green,
-                transition: 'width 0.5s',
-              }} />
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {Object.values(cronSchedule).map((s: any, i: number) => (
+          <div key={i} style={{
+            background: c.card, border: `1px solid ${c.border}`, borderRadius: 12,
+            padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: c.text }}>{s.time}</div>
+              <div style={{ fontSize: 11, color: c.muted }}>{s.task}</div>
             </div>
-            <span style={{ fontSize: 10, color: c.muted, minWidth: 28 }}>{progress}%</span>
+            <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: c.green + '20', color: c.green, border: `1px solid ${c.green}40` }}>{s.type}</span>
           </div>
-          {/* Trigger button */}
+        ))}
+      </div>
+
+      {/* 右侧：状态 + 触发按钮（V5.0+才显示） */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 200 }}>
+        {hasBackend && statusData && (
+          <div style={{
+            background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: '12px',
+          }}>
+            <div style={{ fontSize: 10, color: c.muted, marginBottom: 6 }}>实时状态</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: statusData.state === 'RUNNING' ? c.accent : c.muted }}>
+              {statusData.state === 'RUNNING' ? '⚡ 进行中' : '○ 待机'}
+            </div>
+            <div style={{ fontSize: 10, color: c.muted, marginTop: 4 }}>
+              今日运行：{statusData.today_runs} 次
+            </div>
+          </div>
+        )}
+        {hasBackend && (
           <button
-            onClick={onTrigger}
-            disabled={isRunning}
+            onClick={handleTrigger}
+            disabled={loading}
             style={{
-              padding: '6px 14px', borderRadius: 8, border: 'none',
-              background: isRunning
-                ? c.surface
-                : `linear-gradient(135deg,${c.accent},${c.accent2})`,
-              color: isRunning ? c.muted : '#fff',
-              fontSize: 11, fontWeight: 700,
-              cursor: isRunning ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '10px 16px', borderRadius: 10, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+              background: loading ? c.surface : 'linear-gradient(135deg, #0052d4, #0d47a1)',
+              color: loading ? c.muted : '#fff', fontWeight: 700, fontSize: 13, textAlign: 'center',
+              boxShadow: '0 4px 16px #0052d440',
             }}
           >
-            <span>🚀</span>
-            {progress === 0
-              ? '立即触发'
-              : progress >= 100
-                ? '再次触发'
-                : '运行中...'}
+            {loading ? '触发中…' : '🚀 立即触发'}
           </button>
-        </div>
-      </div>
-
-      <div style={{ overflowX: 'auto' }}><DAGView nodes={nodes} /></div>
-
-      <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-        {[
-          { color: c.muted, l: '待机' },
-          { color: c.accent, l: '进行中' },
-          { color: c.green, l: '完成' },
-          { color: c.red, l: '拒绝/打回' },
-        ].map(x => (
-          <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: x.color }} />
-            <span style={{ fontSize: 10, color: c.muted }}>{x.l}</span>
-          </div>
-        ))}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto' }}>
-          <div style={{ width: 20, height: 1, borderTop: `1.5px dashed ${c.red}` }} />
-          <span style={{ fontSize: 10, color: c.muted }}>质检打回归</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Verdict badge ────────────────────────────────────────────────────────────
-function VerdictBadge({ v }: { v: string }) {
-  const mc: Record<string, string> = {
-    '夸大其词': c.red,
-    '待核实':   c.amber,
-    '证据不足': '#fb923c',
-  }
-  const color = mc[v] || c.muted
-  const suffix: Record<string, string> = {
-    '夸大其词': '— 证据不实',
-    '待核实':   '— 信息矛盾',
-    '证据不足': '— 缺少关键数据',
-  }
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-      <span style={{
-        fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100,
-        background: color + '20', color: color, border: `1px solid ${color}40`,
-      }}>
-        {v}
-      </span>
-      <span style={{ fontSize: 9, color }}>{suffix[v] || ''}</span>
-    </div>
-  )
-}
-
-// ─── Truth card ───────────────────────────────────────────────────────────────
-function TruthCard({ item, idx }: { item: typeof truthCases[0]; idx: number }) {
-  const letters = ['A', 'B', 'C']
-  const vc: Record<string, string> = {
-    '夸大其词': c.red,
-    '待核实':   c.amber,
-    '证据不足': '#fb923c',
-  }
-  const verdictColor = vc[item.verdict] || c.muted
-
-  return (
-    <div style={{
-      background: c.surface, border: `1px solid ${c.border}`,
-      borderRadius: 14, overflow: 'hidden',
-      minWidth: 340, maxWidth: 360, flexShrink: 0,
-    }}>
-      {/* Top accent line */}
-      <div style={{
-        height: 3,
-        background: `linear-gradient(90deg, ${verdictColor}60, transparent)`,
-      }} />
-
-      <div style={{ padding: '14px 16px' }}>
-        {/* Header: model + source link */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 24, height: 24, borderRadius: 6,
-              background: verdictColor + '20', border: `1px solid ${verdictColor}40`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: verdictColor, fontSize: 10, fontWeight: 900,
-            }}>
-              {letters[idx]}
-            </div>
-            <span style={{ fontSize: 11, color: c.muted }}>{item.time}</span>
-          </div>
-          <VerdictBadge v={item.verdict} />
-        </div>
-
-        {/* Model name + source */}
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: c.text, marginBottom: 4 }}>
-            {item.model}
-          </div>
-          {item.sourceUrl ? (
-            <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer"
-              style={{ fontSize: 11, color: c.accent, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              {item.source} ↗
-            </a>
-          ) : (
-            <span style={{ fontSize: 11, color: c.muted }}>{item.source}</span>
-          )}
-        </div>
-
-        {/* Our verdict conclusion */}
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: c.accent, marginBottom: 4 }}>
-            我们核查结论
-          </div>
-          <p style={{ fontSize: 12, color: c.text, margin: 0, lineHeight: 1.6 }}>
-            {item.ourVerdict}
-          </p>
-        </div>
-
-        {/* Evidence chain table */}
-        <div style={{ background: '#030712', borderRadius: 8, overflow: 'hidden', marginBottom: 10 }}>
-          <div style={{ padding: '8px 12px 6px', borderBottom: `1px solid ${c.border}` }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: c.text }}>证据链</span>
-          </div>
-          {item.evidence.map((ev, i) => {
-            const isBad = ev.val.includes('无') || ev.val === '暂无'
-              || ev.val === 'unknown' || ev.val === '拒绝入库'
-            return (
-              <div key={i} style={{
-                padding: '7px 12px',
-                borderBottom: i < item.evidence.length - 1 ? `1px solid ${c.border}` : 'none',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: c.muted, flex: 1 }}>{ev.label}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: isBad ? c.red : c.text, flexShrink: 0 }}>
-                    {ev.val}
-                  </span>
-                </div>
-                {ev.sourceUrl ? (
-                  <a href={ev.sourceUrl} target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize: 10, color: c.accent, textDecoration: 'none', opacity: 0.8, display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
-                    来源: {ev.source} ↗
-                  </a>
-                ) : (
-                  <span style={{ fontSize: 10, color: c.muted, opacity: 0.6, marginTop: 2, display: 'block' }}>
-                    来源: {ev.source}
-                  </span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Lesson */}
-        <p style={{
-          fontSize: 10, color: c.muted, margin: 0, fontStyle: 'italic',
-          lineHeight: 1.5, borderTop: `1px solid ${c.border}`, paddingTop: 8,
-        }}>
-          → {item.lesson}
-        </p>
-
-        {/* Original quote */}
-        <div style={{
-          background: '#060d1a', border: `1px solid ${verdictColor}30`,
-          borderRadius: 8, padding: '10px 12px', marginTop: 10,
-        }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: verdictColor, marginBottom: 5, letterSpacing: '0.05em' }}>
-            原始引述
-          </div>
-          <p style={{ fontSize: 11, color: c.text, margin: 0, lineHeight: 1.6, fontStyle: 'italic' }}>
-            "{item.exactQuote}"
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Work log ─────────────────────────────────────────────────────────────────
-function WorkLog() {
-  return (
-    <div style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{
-        padding: '12px 16px', borderBottom: `1px solid ${c.border}`,
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: c.text }}>Work Log · 今日</span>
-        <span style={{ marginLeft: 'auto', fontSize: 10, color: c.muted }}>
-          {new Date().toISOString().slice(0, 10)}
-        </span>
-      </div>
-      {todayLog.map((log, i) => (
-        <div key={i} style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
-          borderBottom: i < todayLog.length - 1 ? `1px solid ${c.border}` : 'none',
-        }}>
-          <span style={{ fontSize: 10, color: c.muted, width: 36, flexShrink: 0 }}>{log.time}</span>
-          <span style={{ fontSize: 11, color: c.text, flex: 1, lineHeight: 1.4 }}>{log.action}</span>
-          <span style={{
-            fontSize: 10, fontWeight: 700,
-            color: log.status === 'done' ? c.green : c.amber, flexShrink: 0,
+        )}
+        {!hasBackend && (
+          <div style={{
+            background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: '12px',
+            textAlign: 'center', fontSize: 11, color: c.muted,
           }}>
-            {log.status === 'done' ? '✓' : '◷'}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ─── Closed loop flow (5 steps) ──────────────────────────────────────────────
-function ClosedLoopFlow() {
-  const steps = [
-    { id: 'commit',  label: '① Commit History',    sub: '每次执行记录',        icon: '📝', color: c.accent  },
-    { id: 'review',  label: '② Skill Self-Review', sub: '对照 SKILL.md',       icon: '🔍', color: c.amber  },
-    { id: 'pattern', label: '③ Pattern Analysis',  sub: '找重复失误',          icon: '🔎', color: c.purple },
-    { id: 'update', label: '④ Update Skills',     sub: '更新规则',            icon: '✏️', color: c.green  },
-    { id: 'next',   label: '⑤ Next Run',          sub: '用更强规则跑',        icon: '🚀', color: c.accent  },
-  ]
-  return (
-    <div style={{
-      background: '#060d1a', border: `1px solid ${c.border}`,
-      borderRadius: 12, padding: '16px 20px', marginBottom: 14,
-    }}>
-      <div style={{
-        fontSize: 11, fontWeight: 700, color: c.accent,
-        marginBottom: 12, letterSpacing: '0.05em',
-      }}>
-        AUTO RESEARCH · SKILL 闭环流程
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        {steps.map((s, i) => (
-          <div key={s.id} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-            <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 10, margin: '0 auto 6px',
-                background: s.color + '20', border: `1.5px solid ${s.color}50`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 18,
-              }}>
-                {s.icon}
-              </div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: c.text, marginBottom: 2 }}>{s.label}</div>
-              <div style={{ fontSize: 9, color: c.muted }}>{s.sub}</div>
-            </div>
-            {i < steps.length - 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 20 }}>
-                <div style={{ width: 20, height: 1, background: c.border }} />
-                <div style={{
-                  width: 0, height: 0,
-                  borderTop: '4px solid transparent',
-                  borderBottom: '4px solid transparent',
-                  borderLeft: `6px solid ${c.border}`,
-                }} />
-              </div>
-            )}
+            后端功能待接入<br /><span style={{ fontSize: 10, color: c.accent }}>切换至 V5.0+ 体验</span>
           </div>
-        ))}
-      </div>
-      <div style={{
-        marginTop: 12, padding: '8px 12px', background: c.surface,
-        borderRadius: 8, fontSize: 11, color: c.muted, lineHeight: 1.6,
-      }}>
-        <span style={{ color: c.accent, fontWeight: 700 }}>反馈信号：</span>
-        拦截率变化 + Benchmark合规率变化 + 重复失误次数。当 ≥2 次出现同类失误，触发 Skill 更新。
-      </div>
-    </div>
-  )
-}
-
-// ─── Iteration history ────────────────────────────────────────────────────────
-function IterationHistory({ latestRun }: { latestRun: number }) {
-  const [flash, setFlash] = useState(false)
-
-  useEffect(() => {
-    if (latestRun > 0) {
-      setFlash(true)
-      const t = setTimeout(() => setFlash(false), 2000)
-      return () => clearTimeout(t)
-    }
-  }, [latestRun])
-
-  const rounds = [
-    {
-      round: '第1轮 · 初版自审', date: '2026-04-05', isLatest: true,
-      trigger: 'SKILL.md v1 部署后，触发首次自动化自审，对照 GitHub commit 历史逐条核对',
-      findings: [
-        'Benchmark 数据字段系统性缺失（16处）',
-        'P0 许可证门禁漏拦（2处，Mistral Small 4 / Step-3.5-Flash）',
-        '信息源优先级未标注（8处）',
-      ],
-      updates: [
-        'Benchmark 数据字段改为必填，空值拒绝入库',
-        'P0-3 门禁新增许可证二次确认步骤',
-        '所有信息源强制标注优先级',
-      ],
-      metrics: { p0Rate: '4%（2/50）', bm: '68%', skillUpdates: '3项', score: '52/100' },
-    },
-    {
-      round: '第2轮（积累中）', date: '下次触发后', isLatest: false,
-      trigger: '积累 ≥50 条入库记录后自动触发，或 P0 拦截率 >5% 时立即触发',
-      findings: ['待积累更多数据——当前入库记录不足50条'],
-      updates: ['待触发后确定'],
-      metrics: null,
-    },
-  ]
-
-  return (
-    <div style={{
-      background: c.surface, border: `1px solid ${c.border}`,
-      borderRadius: 12, overflow: 'hidden', marginBottom: 14,
-    }}>
-      <div style={{
-        padding: '12px 16px', borderBottom: `1px solid ${c.border}`,
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: c.text }}>迭代历史 · Iteration History</span>
-        <span style={{ marginLeft: 'auto', fontSize: 10, color: c.muted }}>共1轮</span>
+        )}
       </div>
 
-      {rounds.map((r, i) => (
-        <div key={r.round} style={{
-          padding: '14px 16px',
-          borderBottom: i < rounds.length - 1 ? `1px solid ${c.border}` : 'none',
-          background: r.isLatest && flash ? `${c.accent}10` : 'transparent',
-          transition: 'background 0.5s',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{
-              fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 100,
-              background: r.isLatest ? `${c.green}20` : c.surface,
-              color: r.isLatest ? c.green : c.muted,
-              border: `1px solid ${r.isLatest ? `${c.green}40` : c.border}`,
-            }}>
-              {r.round}
-            </span>
-            <span style={{ fontSize: 11, color: c.muted }}>{r.date}</span>
-            {r.isLatest && (
-              <span style={{
-                marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: c.accent,
-                background: `${c.accent}15`, padding: '2px 8px', borderRadius: 100,
-              }}>
-                最新
-              </span>
-            )}
-          </div>
-
-          <div style={{ fontSize: 11, color: c.text, marginBottom: 6, fontStyle: 'italic' }}>
-            触发：{r.trigger}
-          </div>
-
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 10, color: c.red, fontWeight: 700, marginBottom: 4 }}>发现（Findings）</div>
-            {r.findings.map((f, fi) => (
-              <div key={fi} style={{ fontSize: 11, color: c.muted, paddingLeft: 10, marginBottom: 2 }}>
-                • {f}
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 10, color: c.green, fontWeight: 700, marginBottom: 4 }}>更新（Updates）</div>
-            {r.updates.map((u, ui) => (
-              <div key={ui} style={{ fontSize: 11, color: c.muted, paddingLeft: 10, marginBottom: 2 }}>
-                • {u}
-              </div>
-            ))}
-          </div>
-          {r.metrics && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-              {[
-                { label: 'P0拦截率',     val: r.metrics.p0Rate,      color: c.amber  },
-                { label: 'Benchmark合规', val: r.metrics.bm,          color: c.accent },
-                { label: 'Skill更新',    val: r.metrics.skillUpdates, color: c.green  },
-                { label: 'Score',         val: r.metrics.score,        color: c.purple },
-              ].map(m => (
-                <div key={m.label} style={{
-                  background: '#060d1a', borderRadius: 6, padding: '6px 8px', textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: 9, color: c.muted, marginBottom: 2 }}>{m.label}</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: m.color }}>{m.val}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ─── Goals panel ──────────────────────────────────────────────────────────────
-function GoalsPanel() {
-  const goals = [
-    { label: 'P0拦截率',      current: '4%',   target: '< 2%',  desc: 'license错误 + SOTA无证据',       color: c.amber  },
-    { label: 'Benchmark合规率', current: '68%', target: '> 90%', desc: '入库模型必须有Benchmark数据',   color: c.accent },
-    { label: '自审触发',       current: '每日', target: '≥2次同类失误立即触发', desc: '自审循环加速',       color: c.green  },
-    { label: '平均修复周期',   current: '24h',  target: '< 4h',  desc: '从发现到Skill更新生效',         color: c.purple },
-  ]
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 14 }}>
-      {goals.map(g => (
-        <div key={g.label} style={{
-          background: c.surface, border: `1px solid ${c.border}`,
-          borderRadius: 10, padding: '12px 12px',
-        }}>
-          <div style={{ fontSize: 10, color: c.muted, marginBottom: 6 }}>{g.label}</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: g.color }}>{g.current}</span>
-            <span style={{ fontSize: 11, color: c.muted }}>→</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: c.green }}>{g.target}</span>
-          </div>
-          <div style={{ fontSize: 10, color: c.muted, lineHeight: 1.4 }}>{g.desc}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ─── Main App ─────────────────────────────────────────────────────────────────
-export default function AppC({ activePage = 'home' }: { activePage?: string }) {
-  const [mounted, setMounted] = useState(false)
-  const [orgExpanded, setOrgExpanded] = useState(true)
-  const [progress, setProgress] = useState(100)
-  const [animating, setAnimating] = useState(false)
-  const [triggerCount, setTriggerCount] = useState(0)
-  const [activeTab, setActiveTab] = useState<'home' | 'library' | 'skills'>(activePage as 'home' | 'library' | 'skills')
-  const [status, setStatus] = useState<StatusInfo | null>(null)
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  useEffect(() => { setTimeout(() => setMounted(true), 100) }, [])
-
-  // Load live status on mount
-  useEffect(() => {
-    fetchStatus().then(s => { if (s) setStatus(s) }).catch(() => {})
-    // Refresh status every 30s
-    const interval = setInterval(() => {
-      fetchStatus().then(s => { if (s) setStatus(s) }).catch(() => {})
-    }, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  function showToast(msg: string, type: 'success' | 'error') {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 4000)
-  }
-
-  async function handleTrigger() {
-    if (animating) return
-    setAnimating(true)
-    setProgress(0)
-    let p = 0
-    timerRef.current = setInterval(() => {
-      p += 2
-      setProgress(p)
-      if (p >= 100) {
-        clearInterval(timerRef.current!)
-        setAnimating(false)
-        setTriggerCount(c => c + 1)
-      }
-    }, 80)
-    // Call backend API
-    try {
-      const result = await triggerFlywheel()
-      showToast(`🚀 飞轮已触发！run_id: ${result.run_id.slice(0, 8)}...`, 'success')
-      // Refresh status
-      fetchStatus().then(s => { if (s) setStatus(s) }).catch(() => {})
-    } catch {
-      showToast('❌ 触发失败，请稍后重试', 'error')
-    }
-  }
-
-  return (
-    <div style={{
-      minHeight: '100vh', background: c.bg, color: c.text,
-      fontFamily: "'Inter',system-ui,sans-serif", position: 'relative',
-    }}>
-      {/* Ambient glows */}
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute', width: 600, height: 600, top: -200, left: -100,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle,#1d4ed820 0%,transparent 70%)',
-        }} />
-        <div style={{
-          position: 'absolute', width: 500, height: 500, top: 200, right: -150,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle,#818cf810 0%,transparent 70%)',
-        }} />
-      </div>
-
-      {/* Toast notification */}
-      {toast && (
+      {/* Toast */}
+      {triggerResult && (
         <div style={{
           position: 'fixed', top: 80, right: 24, zIndex: 9999,
           padding: '10px 18px', borderRadius: 10,
-          background: toast.type === 'success' ? '#052e16' : '#2d0a0a',
-          color: toast.type === 'success' ? '#34d399' : '#f87171',
-          border: `1px solid ${toast.type === 'success' ? '#34d399' : '#f87171'}40`,
-          fontSize: 13, fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          minWidth: 200,
+          background: triggerResult.type === 'success' ? '#052e16' : '#2d0a0a',
+          color: triggerResult.type === 'success' ? c.green : c.red,
+          border: `1px solid ${triggerResult.type === 'success' ? c.green : c.red}40`,
+          fontSize: 12, fontWeight: 600,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+          maxWidth: 320,
         }}>
-          {toast.msg}
+          {triggerResult.msg}
         </div>
       )}
+    </div>
+  )
+}
 
-      {/* ── Navigation ── */}
-      <div style={{
-        borderBottom: `1px solid ${c.border}`, padding: '0 48px', height: 60,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: c.bg + 'dd', backdropFilter: 'blur(20px)',
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
-      }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 10,
-            background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 16, fontWeight: 900,
-            boxShadow: `0 0 20px ${c.accent}50`,
-          }}>
-            S
-          </div>
-          <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: '-0.02em' }}>
-            <span style={{
-              background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              SOTARadar
-            </span>
-            <span style={{ fontSize: 11, color: c.accent, fontWeight: 700, borderLeft: `1px solid ${c.border}`, paddingLeft: 10, marginLeft: 10 }}>
-              SOTA Radar · 模型知识飞轮
-            </span>
+// ─── Verdict Badge ─────────────────────────────────────────────
+function VerdictBadge({ verdict }: { verdict: string }) {
+  const map: Record<string, { color: string; bg: string }> = {
+    '✅ 已修复': { color: c.green, bg: '#052e16' },
+    '⚠️ 待核实': { color: c.amber, bg: '#3b1d00' },
+    '❌ 误报': { color: c.red, bg: '#2d0a0a' },
+    '✅ 合规': { color: c.green, bg: '#052e16' },
+    '⚠️ 合规存疑': { color: c.amber, bg: '#3b1d00' },
+    '❌ 不合规': { color: c.red, bg: '#2d0a0a' },
+  }
+  const x = map[verdict] || { color: c.muted, bg: c.card }
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 100, background: x.bg, color: x.color, border: `1px solid ${x.color}50` }}>
+      {verdict}
+    </span>
+  )
+}
+
+// ─── Truth Card ────────────────────────────────────────────────
+function TruthCard({ item, index }: { item: any; index: number }) {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <div style={{
+      minWidth: 340, maxWidth: 380, background: c.card, border: `1px solid ${c.border}`,
+      borderRadius: 14, overflow: 'hidden', flexShrink: 0,
+    }}>
+      <div style={{ padding: '14px 16px', borderBottom: `1px solid ${c.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: '#1e293b', color: c.muted }}>
+            Case {index + 1}
+          </span>
+          <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 100, background: c.red + '20', color: c.red, border: `1px solid ${c.red}40` }}>
+            {item.category}
           </span>
         </div>
+        <div style={{ fontSize: 13, fontWeight: 800, color: c.text, marginBottom: 4 }}>{item.title}</div>
+        <div style={{ fontSize: 11, color: c.muted }}>{item.source}</div>
+      </div>
+      <div style={{ padding: '12px 16px' }}>
+        <div style={{ fontSize: 11, color: c.muted, marginBottom: 6 }}>核查结论</div>
+        <VerdictBadge verdict={item.ourVerdict} />
+        <div style={{ fontSize: 10, color: c.text, marginTop: 10, lineHeight: 1.6 }}>{item.summary}</div>
+      </div>
+      {item.evidence && item.evidence.length > 0 && (
+        <div style={{ padding: '0 16px 12px' }}>
+          <div style={{ fontSize: 11, color: c.muted, marginBottom: 6 }}>证据链</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {item.evidence.map((e: any, i: number) => (
+              <div key={i} style={{ display: 'flex', gap: 6, fontSize: 10, color: c.text }}>
+                <span style={{ color: c.accent, fontWeight: 700 }}>→</span>
+                <span>{e}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {item.exactQuote && (
+        <div style={{ padding: '0 16px 12px' }}>
+          <div style={{ fontSize: 11, color: c.muted, marginBottom: 4 }}>原始引述</div>
+          <blockquote style={{
+            margin: 0, padding: '8px 12px', borderLeft: `3px solid ${c.accent}50`,
+            background: c.surface, borderRadius: '0 6px 6px 0', fontSize: 10,
+            color: c.muted, fontStyle: 'italic', lineHeight: 1.6,
+          }}>
+            "{item.exactQuote}"
+          </blockquote>
+        </div>
+      )}
+      {item.sourceUrl && (
+        <div style={{ padding: '0 16px 12px' }}>
+          <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" style={{
+            fontSize: 10, color: c.accent, textDecoration: 'none',
+          }}>
+            ↗ 查看来源
+          </a>
+        </div>
+      )}
+      <div style={{ padding: '8px 16px', borderTop: `1px solid ${c.border}`, background: c.surface }}>
+        <button onClick={() => setExpanded(!expanded)} style={{
+          fontSize: 10, color: c.muted, background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+        }}>
+          {expanded ? '收起 ▲' : '展开 lesson ▼'}
+        </button>
+        {expanded && (
+          <p style={{ fontSize: 10, color: c.muted, margin: '8px 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>
+            → {item.lesson}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 4 }}>
-          {([
-            { id: 'home' as const,    label: '🏠 首页' },
-            { id: 'library' as const, label: '📚 模型知识库' },
-            { id: 'skills' as const,  label: '📄 Skills文档库' },
-          ]).map(tab => (
+// ─── Work Log ──────────────────────────────────────────────────
+function WorkLog() {
+  return (
+    <div style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 16px', borderBottom: `1px solid ${c.border}`, fontSize: 12, fontWeight: 700, color: c.text }}>
+        今日工作记录
+      </div>
+      <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {todayLog.map((l, i) => (
+          <div key={i} style={{ display: 'flex', gap: 10, fontSize: 11 }}>
+            <span style={{ color: c.accent, fontWeight: 700, minWidth: 80 }}>{l.agent}</span>
+            <span style={{ color: c.muted }}>{l.action}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Closed Loop Flow ───────────────────────────────────────────
+function ClosedLoopFlow() {
+  const steps = [
+    { icon: '📝', label: 'Commit History', sub: '变更记录' },
+    { icon: '🔍', label: 'Skill Self-Review', sub: '规则自审' },
+    { icon: '📊', label: 'Pattern Analysis', sub: '模式分析' },
+    { icon: '🔄', label: 'Update Skills', sub: '更新规则' },
+    { icon: '⏰', label: 'Next Run', sub: '等待下次' },
+  ]
+  return (
+    <div style={{ display: 'flex', gap: 0, alignItems: 'center', overflowX: 'auto', padding: '4px 0' }}>
+      {steps.map((s, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 0, flexShrink: 0 }}>
+          <div style={{
+            background: c.card, border: `1px solid ${c.border}`, borderRadius: 12,
+            padding: '12px 16px', textAlign: 'center', minWidth: 120,
+          }}>
+            <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: c.text }}>{s.label}</div>
+            <div style={{ fontSize: 9, color: c.muted }}>{s.sub}</div>
+          </div>
+          {i < steps.length - 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 4px' }}>
+              <span style={{ color: c.accent, fontSize: 14 }}>→</span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Goals Panel ───────────────────────────────────────────────
+function GoalsPanel({ version }: { version: string }) {
+  const goals = [
+    { label: 'P0拦截率', value: '4%', target: '>10%', ok: false },
+    { label: 'Benchmark合规', value: '68%', target: '>90%', ok: false },
+    { label: 'Skill更新', value: '3项', target: '持续', ok: true },
+    { label: '质检覆盖率', value: '100%', target: '100%', ok: true },
+  ]
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+      {goals.map((g, i) => (
+        <div key={i} style={{
+          background: c.card, border: `1px solid ${g.ok ? c.green + '40' : c.amber + '40'}`,
+          borderRadius: 12, padding: '14px', textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 20, fontWeight: 900, color: g.ok ? c.green : c.amber, marginBottom: 4 }}>
+            {g.value}
+          </div>
+          <div style={{ fontSize: 11, color: c.muted }}>{g.label}</div>
+          <div style={{ fontSize: 9, color: c.muted, marginTop: 2 }}>目标 {g.target}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── MAIN APP ──────────────────────────────────────────────────
+
+// ─── Task Board ────────────────────────────────────────────────
+function TaskBoard({ version }: { version: string }) {
+  const tasks = [
+    { id: 'v5.1', title: 'V5.0: FastAPI核心+知识存储', owner: '子智能体-A', status: '已完成', started: '10:05', finished: '10:15', duration: '10分钟', version: 'V5.0', notes: '后端v0.1完成，7860端口运行', color: '#34d399' },
+    { id: 'v5.2', title: 'V5.0: 前端API接入+版本切换', owner: 'AI PM', status: '已完成', started: '10:16', finished: '11:30', duration: '74分钟', version: 'V5.0', notes: '版本切换器重构，AppC重写', color: '#34d399' },
+    { id: 'v6.1', title: 'V6.0: OpenClaw Agent真实触发', owner: '子智能体-3', status: '进行中', started: '01:36', finished: '—', duration: '进行中', version: 'V6.0', notes: 'OpenClaw CLI接入，线程化触发', color: '#38bdf8' },
+    { id: 'v7.1', title: 'V7.0: SSE实时状态推送', owner: '待分配', status: '待开始', started: '—', finished: '—', duration: '—', version: 'V7.0', notes: '', color: '#64748b' },
+    { id: 'v8.1', title: 'V8.0: Cron定时+GitHub同步', owner: '待分配', status: '待开始', started: '—', finished: '—', duration: '—', version: 'V8.0', notes: '', color: '#64748b' },
+  ]
+
+  return (
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 48px 48px' }}>
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 10, color: '#38bdf8', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+          团队协作 · 任务追踪
+        </div>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#f1f5f9', margin: 0 }}>
+          任务看板 · Task Board
+        </h1>
+        <p style={{ fontSize: 13, color: '#64748b', margin: '8px 0 0' }}>
+          每个任务有明确owner、时间记录、状态追踪 · 当前时间 {new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+        </p>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 28 }}>
+        {[
+          { label: '总任务', value: tasks.length, color: '#38bdf8' },
+          { label: '已完成', value: tasks.filter(t => t.status === '已完成').length, color: '#34d399' },
+          { label: '进行中', value: tasks.filter(t => t.status === '进行中').length, color: '#38bdf8' },
+          { label: '待开始', value: tasks.filter(t => t.status === '待开始').length, color: '#64748b' },
+          { label: '本周完成', value: tasks.filter(t => t.status === '已完成').length, color: '#a78bfa' },
+        ].map((s, i) => (
+          <div key={i} style={{ background: '#111827', border: `1px solid #1e293b`, borderRadius: 12, padding: '16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: s.color }}>{s.value}</div>
+            <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Task list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {tasks.map((t, i) => (
+          <div key={t.id} style={{
+            background: '#111827', border: `1px solid ${t.color}40`, borderRadius: 14,
+            padding: '16px 20px',
+            borderLeft: `4px solid ${t.color}`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              {/* Version tag */}
+              <div style={{
+                fontSize: 9, fontWeight: 900, padding: '4px 10px', borderRadius: 100,
+                background: t.color + '20', color: t.color, border: `1px solid ${t.color}60`,
+                minWidth: 48, textAlign: 'center', letterSpacing: '0.05em', flexShrink: 0, marginTop: 2,
+              }}>
+                {t.version}
+              </div>
+
+              {/* Content */}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>{t.title}</div>
+                <div style={{ fontSize: 11, color: '#64748b', marginBottom: t.notes ? 6 : 0 }}>
+                  👤 {t.owner} {t.notes ? `· ${t.notes}` : ''}
+                </div>
+                {t.notes && <div style={{ fontSize: 11, color: '#475569', fontStyle: 'italic' }}>→ {t.notes}</div>}
+              </div>
+
+              {/* Time tracking */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', flexShrink: 0 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 100,
+                  background: t.color + '20', color: t.color, border: `1px solid ${t.color}40`,
+                }}>
+                  {t.status}
+                </span>
+                <div style={{ fontSize: 10, color: '#475569', textAlign: 'right' }}>
+                  {t.started !== '—' && <>开始 {t.started}<br /></>}
+                  {t.finished !== '—' && <>结束 {t.finished}<br /></>}
+                  <strong style={{ color: '#94a3b8' }}>{t.duration}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function AppC({ version = 'v5.0', activePage = 'home' }: AppCProps) {
+  const [mounted, setMounted] = useState(false)
+  const [orgExpanded, setOrgExpanded] = useState(true)
+  const [activeTab, setActiveTab] = useState<string>(activePage)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => { setTimeout(() => setMounted(true), 100) }, [])
+  useEffect(() => { setActiveTab(activePage as any) }, [activePage])
+
+  return (
+    <div style={{ minHeight: '100vh', background: c.bg, color: c.text, fontFamily: "'Inter',system-ui,sans-serif", position: 'relative' }}>
+      {/* Background glow */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', width: 600, height: 600, top: -200, left: -100, borderRadius: '50%', background: 'radial-gradient(circle,#1d4ed820 0%,transparent 70%)' }} />
+        <div style={{ position: 'absolute', width: 500, height: 500, top: 200, right: -150, borderRadius: '50%', background: 'radial-gradient(circle,#818cf810 0%,transparent 70%)' }} />
+      </div>
+
+      {/* Nav */}
+      <div style={{
+        borderBottom: `1px solid ${c.border}`, padding: '0 48px', height: 60,
+        display: 'flex', alignItems: 'center', gap: 0, position: 'sticky', top: 0, zIndex: 100,
+        background: 'rgba(3,7,18,0.9)', backdropFilter: 'blur(20px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 24 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: `linear-gradient(135deg, ${c.accent}40, ${c.accent2}40)`,
+            border: `1.5px solid ${c.accent}60`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+          }}>
+            ⚡
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: c.text, lineHeight: 1.2 }}>SOTA Radar</div>
+            <div style={{ fontSize: 9, color: c.accent, fontWeight: 600 }}>模型知识飞轮</div>
+          </div>
+        </div>
+
+        {/* Version badge */}
+        <div style={{
+          fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 100,
+          background: '#38bdf820', color: c.accent, border: `1px solid #38bdf840`,
+          marginRight: 8, letterSpacing: '0.05em',
+        }}>
+          {version.toUpperCase()}
+        </div>
+
+        {/* Tab nav */}
+        <div style={{ display: 'flex', gap: 4, marginLeft: 8 }}>
+          {[
+            { id: 'home', label: '🏠 首页' },
+            { id: 'tasks', label: '📋 任务看板' },
+            { id: 'library', label: '📚 模型知识库' },
+            { id: 'skills', label: '📄 Skills文档库' },
+          ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => setActiveTab(tab.id as any)}
               style={{
-                padding: '5px 14px', borderRadius: 8, border: 'none',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                padding: '5px 14px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', transition: 'all 0.15s',
                 background: activeTab === tab.id ? c.accent + '22' : 'transparent',
                 color: activeTab === tab.id ? c.accent : c.muted,
                 borderBottom: activeTab === tab.id ? `2px solid ${c.accent}` : '2px solid transparent',
-                transition: 'all 0.15s',
               }}
             >
               {tab.label}
@@ -908,189 +615,115 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
           ))}
         </div>
 
-        {/* Right side */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 12 }}>
-          <span style={{ color: c.muted }}>多智能体协作 · 每日运转</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.green }}>
-            <div style={{
-              width: 7, height: 7, borderRadius: '50%',
-              background: c.green, boxShadow: `0 0 8px ${c.green}`,
-            }} />
-            LIVE
-          </span>
-          <span style={{ color: c.accent, fontWeight: 700, fontSize: 11 }}>
-            ⚡ Powered by OpenClaw
-          </span>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: c.green, fontWeight: 600 }}>●</span>
+          <span style={{ fontSize: 11, color: c.muted }}>Powered by OpenClaw</span>
         </div>
       </div>
 
-      {/* ── Non-home pages ── */}
-      {activeTab !== 'home' && (
-        <div style={{ paddingTop: 60 }}>
+      {/* Page content */}
+      {activeTab === 'tasks' && (
+        <div style={{ paddingTop: 80 }}>
+          <TaskBoard version={version} />
+        </div>
+      )}
+      {(activeTab === 'library' || activeTab === 'skills') && (
+        <div style={{ paddingTop: 80 }}>
           {activeTab === 'library' && <ModelLibrary />}
           {activeTab === 'skills' && <SkillsViewer />}
         </div>
       )}
 
-      {/* ── Home page ── */}
       {activeTab === 'home' && (
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '100px 48px 48px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 48px', position: 'relative', zIndex: 1 }}>
 
-          {/* ── Hero ── */}
-          <div style={{
-            textAlign: 'center', marginBottom: 48,
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(16px)',
-            transition: 'all 0.5s ease',
-          }}>
-            <h1 style={{ fontSize: 42, fontWeight: 900, lineHeight: 1.1, marginBottom: 16, letterSpacing: '-0.02em' }}>
-              <span style={{
-                background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                基于 OpenClaw 多智能体架构
-              </span>
-              <br />
-              <span style={{ color: c.text }}>构建模型知识飞轮</span>
+          {/* Hero */}
+          <div style={{ textAlign: 'center', marginBottom: 40, opacity: mounted ? 1 : 0, transition: 'opacity 0.5s' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: c.accent, marginBottom: 12, textTransform: 'uppercase' }}>
+              OpenClaw Multi-Agent Architecture
+            </div>
+            <h1 style={{ fontSize: 32, fontWeight: 900, color: c.text, margin: '0 0 12px', lineHeight: 1.2 }}>
+              基于 <span style={{ color: c.accent }}>OpenClaw</span> 多智能体架构<br />构建模型知识飞轮
             </h1>
-            <p style={{ fontSize: 15, color: c.muted, maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
-              调研 → 质检 → 归档 → 自审 → 进化，Skills 自我闭环迭代机制。
-              <strong style={{ color: c.accent }}> 每一条拦截都有原因，每一个原因都有证据。</strong>
+            <p style={{ fontSize: 14, color: c.muted, margin: 0 }}>
+              全自动 SOTA 模型发现 · 实时质检 · 持续进化
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 20 }}>
-              {[
-                { icon: '🔍', val: '5',  unit: '类模型并行扫描' },
-                { icon: '🔎', val: '3',  unit: '维度质检门禁' },
-                { icon: '📦', val: '2',  unit: '文档自动同步' },
-                { icon: '🔄', val: '1',  unit: '日均自审闭环' },
-              ].map(s => (
-                <div key={s.unit} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 28, fontWeight: 900, color: c.accent }}>{s.icon} {s.val}</div>
-                  <div style={{ fontSize: 10, color: c.muted }}>{s.unit}</div>
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* ── Section 1: Org chart + Workflow ── */}
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <div style={{ width: 4, height: 24, borderRadius: 2, background: `linear-gradient(180deg,${c.accent},${c.purple})` }} />
-              <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: 0 }}>
-                OpenClaw 模型知识飞轮多智能体团队
-              </h2>
+          {/* Section 1: Org Chart */}
+          <section style={{ marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: 0 }}>OpenClaw 模型知识飞轮多智能体团队</h2>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {/* Left: Org chart + Cron */}
-              <div style={{
-                background: c.surface, border: `1px solid ${c.border}`,
-                borderRadius: 14, padding: 16,
-              }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: c.text, marginBottom: 12 }}>
-                  组织架构 · Organization
-                </div>
-                <OrgChart expanded={orgExpanded} onToggle={() => setOrgExpanded(v => !v)} />
-                <CronCards status={status} />
-              </div>
-              {/* Right: DAG Workflow */}
-              <WorkflowPanel progress={progress} onTrigger={handleTrigger} toast={toast} />
+            <div style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 20 }}>
+              <OrgChart expanded={orgExpanded} onToggle={() => setOrgExpanded(e => !e)} />
             </div>
-          </div>
+          </section>
 
-          {/* ── Section 2: Closed Loop ── */}
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <div style={{ width: 4, height: 24, borderRadius: 2, background: `linear-gradient(180deg,${c.green},${c.accent})` }} />
-              <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: 0 }}>
-                🔄 模型知识飞轮 · 闭环机制
-              </h2>
-              <span style={{ fontSize: 12, color: c.muted, marginLeft: 8, fontWeight: 400 }}>
-                基于 Karpathy Auto Research + WY改进
-              </span>
+          {/* Section 2: DAG */}
+          <section style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: '0 0 16px' }}>🔄 模型知识飞轮工作流 · Workflow Engine</h2>
+            <div style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 20, overflowX: 'auto' }}>
+              <DAGView nodes={dagNodes} />
             </div>
-            <ClosedLoopFlow />
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: c.text, marginBottom: 10 }}>
-                监控目标 · Goals
-              </div>
-              <GoalsPanel />
-            </div>
-            <IterationHistory latestRun={triggerCount} />
-          </div>
+          </section>
 
-          {/* ── Section 3: Truth Filter ── */}
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <div style={{ width: 4, height: 24, borderRadius: 2, background: `linear-gradient(180deg,${c.red},${c.amber})` }} />
-              <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: 0 }}>
-                Truth Filter · 今日打假
-              </h2>
-              <span style={{ fontSize: 12, color: c.muted, marginLeft: 8 }}>
-                每一个拦截都有原因，每一个原因都有证据
-              </span>
+          {/* Section 3: Cron + Trigger */}
+          <section style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: '0 0 16px' }}>⏰ 定时调度 · Cron Schedule</h2>
+            <div style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 20 }}>
+              <CronCards version={version} />
             </div>
-            <div style={{
-              display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8,
-              WebkitOverflowScrolling: 'touch',
-            }}>
-              {truthCases.map((item, i) => (
-                <TruthCard key={item.id} item={item} idx={i} />
-              ))}
-            </div>
-          </div>
 
-          {/* ── Section 4: Work Log + Closed Loop summary ── */}
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <WorkLog />
-              {/* Closed loop summary card */}
-              <div style={{
-                background: c.surface, border: `1px solid ${c.border}`,
-                borderRadius: 14, padding: 16,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: c.text }}>🔄 闭环逻辑</span>
-                </div>
-                <p style={{ fontSize: 12, color: c.muted, lineHeight: 1.7, margin: '0 0 12px' }}>
-                  每轮执行完毕后 Skill 自审启动 → 读取 commit 历史 → 对照 SKILL.md →
-                  发现漏洞 → 更新规则 → 下一轮用更强的规则跑。
-                </p>
-                <div style={{ background: '#060d1a', borderRadius: 8, padding: 12 }}>
-                  {[
-                    ['P0拦截率',       '4%（2/50）',       c.amber  ],
-                    ['Benchmark合规率', '68% → >90%',     c.accent ],
-                    ['SKILL自审',      '已触发1次',        c.green  ],
-                  ].map(([k, v, col]) => (
-                    <div key={k} style={{
-                      display: 'flex', justifyContent: 'space-between',
-                      padding: '5px 0', borderBottom: `1px solid ${c.border}`,
-                    }}>
-                      <span style={{ fontSize: 11, color: c.muted }}>{k}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: col as string }}>{v}</span>
+          </section>
+
+          {/* Section 4: Truth Filter */}
+          <section style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: '0 0 16px' }}>🔍 今日打假 · Truth Filter</h2>
+            <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8 }}>
+              {truthCases.map((item, i) => <TruthCard key={item.id} item={item} index={i} />)}
+            </div>
+          </section>
+
+          {/* Section 5: Closed Loop */}
+          <section style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: '0 0 16px' }}>🔄 模型知识飞轮 · 闭环机制</h2>
+            <div style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 20 }}>
+              <ClosedLoopFlow />
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: c.text, marginBottom: 12 }}>迭代历史</div>
+                {[
+                  { round: 'Round 1', trigger: 'Benchmark数据字段系统性缺失', found: '发现sync_docs.py条件逻辑错误', action: '修复3处脚本bug，更新SKILL.md自审清单' },
+                  { round: 'Round 2', trigger: 'P0拦截率仅4%', found: '质检规则缺少许可证必填检查', action: '新增许可证字段核查规则' },
+                ].map((r, i) => (
+                  <div key={i} style={{
+                    padding: '10px 14px', borderRadius: 10, marginBottom: 8,
+                    background: c.card, border: `1px solid ${c.border}`,
+                  }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: c.accent + '20', color: c.accent }}>{r.round}</span>
+                      <span style={{ fontSize: 10, color: c.muted }}>触发：{r.trigger}</span>
                     </div>
-                  ))}
-                </div>
+                    <div style={{ fontSize: 10, color: c.text, marginBottom: 2 }}>→ 发现：{r.found}</div>
+                    <div style={{ fontSize: 10, color: c.green }}>✓ 行动：{r.action}</div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* ── Footer ── */}
-          <div style={{
-            borderTop: `1px solid ${c.border}`, paddingTop: 28,
-            display: 'flex', justifyContent: 'space-between', fontSize: 11, color: c.muted,
-          }}>
-            <span>© 2026 SOTA Radar · 小龙虾 OpenClaw 多智能体团队</span>
-            <a
-              href="https://github.com/Pass-O-Guava/sota-radar"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: c.accent, textDecoration: 'none' }}
-            >
-              github.com/Pass-O-Guava/sota-radar
-            </a>
-          </div>
+          {/* Section 6: Work Log + Goals */}
+          <section style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: c.text, margin: '0 0 16px' }}>📊 监控目标 · Goals</h2>
+            <GoalsPanel version={version} />
+          </section>
 
+          {/* Footer */}
+          <footer style={{ textAlign: 'center', padding: '24px 0', borderTop: `1px solid ${c.border}`, marginTop: 32 }}>
+            <div style={{ fontSize: 11, color: c.muted }}>
+              © 2026 SOTA Radar · 小龙虾 OpenClaw 多智能体团队 · <span style={{ color: c.accent }}>{version.toUpperCase()}</span>
+            </div>
+          </footer>
         </div>
       )}
     </div>
