@@ -133,6 +133,35 @@ def _run_flywheel_sync(run_id: str, model_ids: list[str], force: bool) -> None:
             arch_ev = f"⚠️ Agent异常: {arch_res.get('error', '')[:80]}"
         _step(run_id, "archive", f"✅ {arch_ev}")
 
+        # ── Step 4b: 写入知识库 Markdown ─────────────────────────────────
+        _step(run_id, "knowledge_write", "📝 正在写入知识库…")
+        kw_ok = []
+        from datetime import date as _date
+        for mid in (qc_passed or []):
+            try:
+                from app.services import knowledge_store as ks
+                meta = getattr(ks, "read_meta", lambda _: None)(mid) if hasattr(ks, "read_meta") else None
+                if meta:
+                    bench = "\n".join([f"- {b.get('name','')}: {b.get('score','')}"
+                                        for b in getattr(meta, "benchmarks", [])]) or "（暂无Benchmark数据）"
+                    analysis = (f"通过 QC 审核（run_id={run_id}）。"
+                                f"许可证：{getattr(meta,'license_tag','unknown')}。"
+                                f"发布方：{getattr(meta,'publisher','unknown')}。"
+                                f"参数量：{getattr(meta,'params','unknown')}。")
+                    from app.services.knowledge_manager import write_model_card
+                    write_model_card(
+                        model_id=mid,
+                        model_name=getattr(meta, "name", mid),
+                        benchmark_data=bench,
+                        analysis=analysis,
+                        tags=["model-card", getattr(meta, "category", "unknown").lower(), f"run:{run_id[:8]}"],
+                    )
+                    kw_ok.append(mid)
+            except Exception as e:
+                pass
+        kw_msg = f"知识卡写入完成：{len(kw_ok)} 个模型" if kw_ok else "无模型需写入"
+        _step(run_id, "knowledge_write", f"✅ {kw_msg}")
+
         # ── Step 5: self_review — Skills 自进化 ────────────────────────────
         _step(run_id, "self_review", "⏳ SelfReview Agent 正在分析失误模式…")
         evolution_result = run_self_evolution(

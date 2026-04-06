@@ -1,112 +1,169 @@
-"""Model knowledge CRUD routes."""
-import math
+"""
+Knowledge API — 知识资产管理路由（OpenClaw 风格 Markdown 知识库）。
+所有知识资产通过 Curator Agent 统一管理。
+"""
+import uuid
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.config import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
-from app.models import ModelCreate, ModelDetail, ModelListResponse, ModelMeta, ModelUpdate
-from app.services import knowledge_store as store
+from app.services.knowledge_manager import (
+    health_report,
+    list_entries,
+    read,
+    search,
+    write,
+    write_daily_log,
+    write_model_card,
+    write_skill_doc,
+    CATEGORIES,
+)
 
-router = APIRouter(prefix="/models", tags=["Knowledge"])
-
-
-def _filter_models(
-    models: list[ModelMeta],
-    category: Optional[str] = None,
-    license: Optional[str] = None,
-    search: Optional[str] = None,
-) -> list[ModelMeta]:
-    result = models
-    if category and category != "全部":
-        result = [m for m in result if m.category == category]
-    if license and license != "全部":
-        result = [m for m in result if m.license_tag == license]
-    if search:
-        q = search.lower()
-        result = [
-            m
-            for m in result
-            if q in m.name.lower() or q in m.publisher.lower() or q in m.insight.lower()
-        ]
-    return result
+router = APIRouter(prefix="/api/v1/knowledge", tags=["Knowledge"])
 
 
-@router.get("", response_model=ModelListResponse)
-def list_models(
-    category: Optional[str] = Query(None),
-    license: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
-    sort: Optional[str] = Query("最近更新"),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+# ─── 读取接口 ───────────────────────────────────────────────────────────
+
+@router.get("/list")
+def list_knowledge(
+    category: Optional[str] = Query(None, description="分类：models/skills/daily/weekly/team"),
+    tag: Optional[str] = Query(None, description="标签过滤"),
+    limit: int = Query(50, ge=1, le=200),
 ):
-    all_models = store.list_all()
-    filtered = _filter_models(all_models, category, license, search)
+    """列出知识资产（支持分类/标签过滤）。"""
+    if category and category not in CATEGORIES:
+        raise HTTPException(status_code=400, detail=f"Invalid category. Options: {CATEGORIES}")
+    return {
+        "entries": list_entries(category=category, tag=tag, limit=limit),
+        "total": len(list_entries(category=category, tag=tag, limit=limit)),
+    }
 
-    if sort == "名称 A-Z":
-        filtered = sorted(filtered, key=lambda m: m.name)
-    elif sort == "Benchmark评分":
-        filtered = sorted(
-            filtered,
-            key=lambda m: max([float(b.score.strip("%~")) for b in m.benchmarks], default=0.0),
-            reverse=True,
+
+@router.get("/read/{path:path}")
+def read_knowledge(path: str):
+    """
+    读取指定知识文件。
+    path: 相对路径，如 'models/qwen3-vl-2026-04-06.md' 或 '2026-04-06'
+    """
+    try:
+        return read(path)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Knowledge asset not found: {path}")
+
+
+@router.get("/search")
+def search_knowledge(
+    q: str = Query(..., min_length=1, description="搜索关键词"),
+    limit: int = Query(20, ge=1, le=50),
+):
+    """
+    关键词全文搜索（文件名 + tags + 标题）。
+    语义搜索由 LLM 提供深度检索能力。
+    """
+    return {
+        "query": q,
+        "results": search(keyword=q, limit=limit),
+        "count": len(search(keyword=q, limit=limit)),
+    }
+
+
+@router.get("/health")
+def knowledge_health():
+    """知识库健康度报告（供前端仪表盘展示）。"""
+    return health_report()
+
+
+# ─── 写入接口（仅 Curator Agent 可用）──────────────────────────────────
+
+@router.post("/write")
+def write_knowledge(body: dict):
+    """
+    写入任意知识资产。
+    body: { category, title, content, tags?, author?, date?, update? }
+    """
+    try:
+        result = write(
+            category=body["category"],
+            title=body["title"],
+            content_body=body["content"],
+            tags=body.get("tags"),
+            author=body.get("author", "Curator Agent"),
+            date_str=body.get("date"),
+            update=body.get("update", True),
         )
-    elif sort == "参数量":
-        def _parse_params(m: ModelMeta) -> float:
-            import re
-            txt = m.params
-            nums = re.findall(r"[\d.]+", txt)
-            return float(nums[0]) if nums else 0.0
-        filtered = sorted(filtered, key=_parse_params, reverse=True)
-    else:  # 最近更新
-        filtered = sorted(filtered, key=lambda m: m.updated_at, reverse=True)
+        return {"ok": True, **result}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    total = len(filtered)
-    start = (page - 1) * page_size
-    page_items = filtered[start : start + page_size]
 
-    return ModelListResponse(
-        models=page_items,
-        total=total,
-        page=page,
-        page_size=page_size,
+@router.post("/daily")
+def append_daily(body: dict):
+    """
+    追加每日研究日志（追加模式，自动去重同日期）。
+    body: { content, date?, tags? }
+    """
+    result = write_daily_log(
+        content=body["content"],
+        date_str=body.get("date"),
+        tags=body.get("tags"),
     )
+    return {"ok": True, **result}
 
 
-@router.get("/{model_id}", response_model=ModelDetail)
-def get_model(model_id: str):
-    meta = store.read_meta(model_id)
-    if meta is None:
-        raise HTTPException(status_code=404, detail="Model not found")
-    knowledge = store.read_knowledge(model_id)
-    return ModelDetail(meta=meta, knowledge=knowledge)
+@router.post("/models")
+def upsert_model_card(body: dict):
+    """
+    写入或更新模型知识卡（幂等写入）。
+    body: { model_id, model_name, benchmark_data, analysis, tags? }
+    """
+    result = write_model_card(
+        model_id=body["model_id"],
+        model_name=body["model_name"],
+        benchmark_data=body.get("benchmark_data", ""),
+        analysis=body.get("analysis", ""),
+        tags=body.get("tags"),
+    )
+    return {"ok": True, **result}
 
 
-@router.get("/{model_id}/knowledge", response_model=dict)
-def get_knowledge(model_id: str):
-    if store.read_meta(model_id) is None:
-        raise HTTPException(status_code=404, detail="Model not found")
-    return {"model_id": model_id, "knowledge": store.read_knowledge(model_id)}
+@router.post("/skills")
+def upsert_skill_doc(body: dict):
+    """
+    写入或更新 Skill 文档。
+    body: { skill_id, skill_name, description, rules, changelog? }
+    """
+    result = write_skill_doc(
+        skill_id=body["skill_id"],
+        skill_name=body["skill_name"],
+        description=body.get("description", ""),
+        rules=body.get("rules", ""),
+        changelog=body.get("changelog"),
+    )
+    return {"ok": True, **result}
 
 
-@router.put("/{model_id}", response_model=ModelMeta)
-def put_model(model_id: str, patch: ModelUpdate):
-    updated = store.update_model(model_id, patch)
-    if updated is None:
-        raise HTTPException(status_code=404, detail="Model not found")
-    return updated
+# ─── 批量操作 ────────────────────────────────────────────────────────────
 
-
-@router.post("", response_model=ModelMeta, status_code=201)
-def post_model(data: ModelCreate):
-    existing = store.read_meta(data.id)
-    if existing is not None:
-        raise HTTPException(status_code=409, detail="Model with this ID already exists")
-    return store.create_model(data)
-
-
-@router.delete("/{model_id}", status_code=204)
-def delete_model(model_id: str):
-    if not store.delete_model(model_id):
-        raise HTTPException(status_code=404, detail="Model not found")
+@router.post("/bulk")
+def bulk_write(items: list[dict]):
+    """
+    批量写入多个知识资产。
+    用于飞轮运转后一次性写入多个模型卡/Skill 更新。
+    items: [{ category, title, content, tags?, date? }, ...]
+    """
+    results = []
+    for item in items:
+        try:
+            r = write(
+                category=item["category"],
+                title=item["title"],
+                content_body=item["content"],
+                tags=item.get("tags"),
+                date_str=item.get("date"),
+                update=item.get("update", False),
+            )
+            results.append({**r, "ok": True})
+        except Exception as exc:
+            results.append({"ok": False, "title": item.get("title"), "error": str(exc)})
+    return {"results": results, "ok_count": sum(1 for r in results if r.get("ok"))}

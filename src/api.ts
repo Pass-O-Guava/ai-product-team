@@ -186,3 +186,32 @@ export async function fetchEvolutionHistory(limit = 20): Promise<{
     return { iterations: [], total: 0 }
   }
 }
+
+// ─── Flywheel Run Logs ──────────────────────────────────────────────────────────
+
+export interface AgentLogEntry {
+  id: string
+  agent_id: string
+  task: string
+  params: Record<string, any>
+  run_id: string
+  step_name: string
+  started_at: string
+  finished_at: string | null
+  duration_ms: number | null
+  output: string | null
+  error: string | null
+  status: 'running' | 'success' | 'error' | 'timeout'
+}
+
+export async function fetchRunLogs(runId: string): Promise<{
+  run_id: string
+  logs: AgentLogEntry[]
+  count: number
+}> {
+  try {
+    return await apiFetch(`/api/v1/flywheel/logs/${runId}`)
+  } catch {
+    return { run_id: runId, logs: [], count: 0 }
+  }
+}

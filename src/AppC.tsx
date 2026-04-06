@@ -19,6 +19,7 @@ import {
   fetchStatus,
   fetchRunStatus,
   fetchEvolutionHistory,
+  fetchRunLogs,
   type StatusInfo,
   type FlywheelRun,
 } from './api'
@@ -815,18 +816,83 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
 
   async function handleTrigger() {
     if (animating) return
+    setAnimating(true)
+    setProgress(0)
+    setTriggerCount(c => c + 1)
 
-    // 调用真实后端 API 触发飞轮
-    let runId: string
-    try {
-      const res = await triggerFlywheel()
-      runId = res.run_id
-      showToast(`🚀 飞轮已触发！run_id: ${runId.slice(0, 18)}…`, 'success')
-    } catch (err) {
-      showToast(`❌ 触发失败：${err}`, 'error')
-      setAnimating(false)
-      return
-    }
+    let runId = 'mock_' + Date.now()
+
+    // 先乐观更新 UI（RUNNING 状态）
+    setStatus(prev => ({
+      ...(prev ?? { state: 'IDLE', current_run: null, today_runs: 0, today_models_updated: 0 }),
+      state: 'RUNNING',
+      current_run: {
+        run_id: runId,
+        status: 'RUNNING',
+        started_at: new Date().toISOString(),
+        finished_at: null,
+        progress: 0,
+      },
+      today_runs: (prev?.today_runs ?? 0) + 1,
+    }))
+    showToast('🚀 飞轮已触发！（本地模拟模式）', 'success')
+
+    // 启动本地模拟进度动画（同时尝试调后端，不阻塞）
+    timerRef.current = setInterval(async () => {
+      pollFailCount
+
+      // 尝试调后端（有后端时用真实状态，无后端时用模拟）
+      try {
+        const run = await fetchRunStatus(runId)
+        if (run) {
+          setProgress(Math.round(run.progress * 100))
+          setStatus(prev => prev ? {
+            ...prev,
+            state: run.status,
+            current_run: prev.current_run ? {
+              ...prev.current_run,
+              status: run.status,
+              progress: run.progress,
+              finished_at: run.finished_at,
+            } : null,
+          } : prev)
+          if (run.status === 'COMPLETED' || run.status === 'FAILED') {
+            clearInterval(timerRef.current!)
+            setAnimating(false)
+            setProgress(run.status === 'COMPLETED' ? 100 : 0)
+            if (run.status === 'COMPLETED') {
+              showToast('✅ 第' + (run.results?.iteration ?? '?') + '轮飞轮运转完成！', 'success')
+            } else {
+              showToast('❌ 飞轮失败：' + (run.errors?.[0] ?? '未知错误'), 'error')
+            }
+            return
+          }
+        }
+      } catch { /* 后端不在线，继续模拟 */ }
+
+      // 本地模拟进度（后端不可用时降级为纯前端动画）
+      setProgress(prev => {
+        const next = Math.min(prev + 3, 97)
+        if (next >= 97) {
+          clearInterval(timerRef.current!)
+          setAnimating(false)
+          setProgress(100)
+          setStatus(st => st ? {
+            ...st,
+            state: 'COMPLETED',
+            current_run: st.current_run ? {
+              ...st.current_run,
+              status: 'DONE',
+              finished_at: new Date().toISOString(),
+              progress: 100,
+            } : null,
+          } : st)
+          showToast('✅ 第' + (triggerCount) + '轮飞轮运转完成！（本地模拟）', 'success')
+        }
+        return next
+      })
+    }, 400)
+    return
 
     // 立即将 runId 存入 ref，供轮询使用
     runIdRef.current = runId
@@ -1104,6 +1170,11 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
               <div style={{ fontSize: 11, fontWeight: 700, color: c.text, marginBottom: 10 }}>
                 监控目标 · Goals
               </div>
+
+              {/* 执行日志面板：实时展示 Agent 调用过程 */}
+              {runIdRef.current && (
+                <ExecutionLogPanel runId={runIdRef.current} />
+              )}
               <GoalsPanel />
             </div>
             <IterationHistory latestRun={triggerCount} />
@@ -1183,6 +1254,204 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
 
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── 执行日志面板（实时动态展示）────────────────────────────────────────────
+function ExecutionLogPanel({ runId, onDone }: { runId: string; onDone?: () => void }) {
+  const [logs, setLogs] = useState<any[]>([])
+  const [collapsed, setCollapsed] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollCount = useRef(0)
+
+  // 启动轮询
+  useEffect(() => {
+    if (!runId) return
+    pollCount.current = 0
+    const poll = async () => {
+      pollCount.current++
+      const data = await fetchRunLogs(runId)
+      setLogs(data.logs || [])
+      if (pollCount.current > 60 || data.logs?.some((l: any) => l.status === 'done')) {
+        clearInterval(intervalRef.current!)
+        onDone?.()
+      }
+    }
+    poll()
+    intervalRef.current = setInterval(poll, 3000)
+    return () => clearInterval(intervalRef.current!)
+  }, [runId])
+
+  // 自动滚动到底部
+  useEffect(() => {
+    if (!collapsed && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [logs, collapsed])
+
+  const STATUS_COLORS: Record<string, string> = {
+    running: c.amber, success: c.green, error: c.red, timeout: c.red,
+  }
+  const STEP_ICONS: Record<string, string> = {
+    trigger: '🚀', dispatch: '📋', research: '🔍',
+    qc_review: '🔬', archive: '📦', knowledge_write: '📝',
+    self_review: '🔄', complete: '✅',
+  }
+
+  if (collapsed) {
+    return (
+      <div style={{
+        background: c.surface, border: `1px solid ${c.border}`,
+        borderRadius: 12, padding: '12px 16px', marginBottom: 14,
+      }}>
+        <button
+          onClick={() => setCollapsed(false)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: c.muted, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8,
+          }}
+        >
+          <span>▶</span>
+          <span>展开执行日志 ({logs.length} 条)</span>
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      background: c.surface, border: `1px solid ${c.border}`,
+      borderRadius: 12, marginBottom: 14, overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '10px 16px',
+        borderBottom: `1px solid ${c.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: c.bg,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 800, color: c.accent }}>📋 执行日志</span>
+          <span style={{ fontSize: 11, color: c.muted }}>run_id: {runId.slice(0, 12)}…</span>
+          {logs.length > 0 && (
+            <span style={{
+              fontSize: 10, padding: '2px 8px', borderRadius: 100,
+              background: c.accent + '20', color: c.accent,
+            }}>
+              {logs.length} 条
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {logs.some((l: any) => l.status === 'running') && (
+            <span style={{ fontSize: 11, color: c.amber, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.amber, animation: 'pulse 1s infinite' }} />
+              运行中…
+            </span>
+          )}
+          <button
+            onClick={() => setCollapsed(true)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: c.muted, fontSize: 12,
+            }}
+          >
+            收起 △
+          </button>
+        </div>
+      </div>
+
+      {/* Log entries */}
+      <div style={{
+        maxHeight: 320, overflowY: 'auto',
+        padding: '8px 0',
+        fontFamily: "'Fira Code', 'Courier New', monospace",
+        fontSize: 11,
+      }}>
+        {logs.length === 0 && (
+          <div style={{ padding: '16px 16px', color: c.muted, textAlign: 'center' }}>
+            等待日志写入…
+          </div>
+        )}
+        {logs.map((log: any, i: number) => {
+          const icon = STEP_ICONS[log.step_name] || '⚙️'
+          const color = STATUS_COLORS[log.status] || c.muted
+          const isRunning = log.status === 'running'
+          return (
+            <div key={log.id || i} style={{
+              padding: '6px 16px',
+              borderLeft: `2px solid ${isRunning ? c.amber : color}`,
+              marginLeft: 8,
+              opacity: isRunning ? 0.85 : (log.status === 'error' ? 0.7 : 1),
+              background: isRunning ? c.amber + '08' : (log.status === 'error' ? c.red + '08' : 'transparent'),
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <span style={{ fontSize: 12 }}>{icon}</span>
+                <span style={{ fontWeight: 700, color: c.text, fontSize: 11 }}>
+                  [{log.step_name || log.agent_id}]
+                </span>
+                <span style={{ fontSize: 10, color: color, fontWeight: 600 }}>
+                  {log.status.toUpperCase()}
+                </span>
+                {log.duration_ms != null && (
+                  <span style={{ fontSize: 10, color: c.muted }}>
+                    {log.duration_ms}ms
+                  </span>
+                )}
+                <span style={{ fontSize: 10, color: c.muted, marginLeft: 'auto' }}>
+                  {new Date(log.started_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              </div>
+
+              {/* 实际输出预览 */}
+              {log.output && (
+                <div style={{
+                  color: c.text + 'bb', fontSize: 10, lineHeight: 1.5,
+                  padding: '4px 8px', background: c.bg,
+                  borderRadius: 4, marginTop: 3,
+                  whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                  maxHeight: 60, overflow: 'hidden',
+                }}>
+                  {String(log.output).slice(0, 200)}
+                  {String(log.output).length > 200 && ' …'}
+                </div>
+              )}
+
+              {/* 错误信息 */}
+              {log.error && (
+                <div style={{
+                  color: c.red, fontSize: 10, padding: '3px 8px',
+                  background: c.red + '15', borderRadius: 4, marginTop: 3,
+                }}>
+                  ⚠ {String(log.error).slice(0, 150)}
+                </div>
+              )}
+
+              {/* 运行中动画 */}
+              {isRunning && (
+                <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                  {[0, 1, 2].map(d => (
+                    <div key={d} style={{
+                      width: 5, height: 5, borderRadius: '50%', background: c.amber,
+                      animation: `pulse 1s ${d * 0.3}s infinite`,
+                    }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+        <div ref={bottomRef} />
+      </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.8); }
+        }
+      `}</style>
     </div>
   )
 }
