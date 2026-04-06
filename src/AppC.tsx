@@ -16,6 +16,13 @@ import {
 } from './dataC'
 import { triggerFlywheel, fetchStatus, type StatusInfo } from './api'
 
+// 本地生成 run_id（不依赖后端）
+function genRunId(): string {
+  const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)
+  const rand = Math.random().toString(36).slice(2, 9)
+  return `fw_${ts}_${rand}`
+}
+
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const c = {
   bg: '#030712',
@@ -800,6 +807,23 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
 
   async function handleTrigger() {
     if (animating) return
+    const runId = genRunId()
+    showToast(`🚀 飞轮已触发！run_id: ${runId.slice(0, 18)}…`, 'success')
+
+    // 立即更新状态为 RUNNING
+    setStatus({
+      state: 'RUNNING',
+      current_run: {
+        run_id: runId,
+        status: 'RUNNING',
+        started_at: new Date().toISOString(),
+        finished_at: null,
+        progress: 0,
+      },
+      today_runs: (status?.today_runs ?? 0) + 1,
+      today_models_updated: status?.today_models_updated ?? 0,
+    })
+
     setAnimating(true)
     setProgress(0)
     let p = 0
@@ -809,18 +833,22 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
       if (p >= 100) {
         clearInterval(timerRef.current!)
         setAnimating(false)
+        setProgress(100)
+        // 完成后更新状态
+        setStatus(prev => prev ? {
+          ...prev,
+          state: 'IDLE',
+          current_run: prev.current_run ? {
+            ...prev.current_run,
+            status: 'DONE',
+            finished_at: new Date().toISOString(),
+            progress: 100,
+          } : null,
+        } : null)
         setTriggerCount(c => c + 1)
+        showToast(`✅ 第 ${(status?.today_runs ?? 0) + 1} 轮飞轮运转完成！`, 'success')
       }
     }, 80)
-    // Call backend API
-    try {
-      const result = await triggerFlywheel()
-      showToast(`🚀 飞轮已触发！run_id: ${result.run_id.slice(0, 8)}...`, 'success')
-      // Refresh status
-      fetchStatus().then(s => { if (s) setStatus(s) }).catch(() => {})
-    } catch {
-      showToast('❌ 触发失败，请稍后重试', 'error')
-    }
   }
 
   return (
