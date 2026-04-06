@@ -1,5 +1,5 @@
 /**
- * SkillsViewer — Document library viewer (stub, shows static content).
+ * SkillsViewer — 文档库查看器
  */
 import { useState } from 'react'
 
@@ -43,40 +43,85 @@ const skills = [
   },
 ]
 
-export default function SkillsViewer() {
+// ─── 导航 Tab 条（供 ModelLibrary / SkillsViewer 复用）───────────────────────
+export function NavTabs({ active, onNavigate }: {
+  active: 'home' | 'library' | 'skills'
+  onNavigate: (tab: 'home' | 'library' | 'skills') => void
+}) {
+  return (
+    <div style={{
+      borderBottom: `1px solid ${c.border}`, padding: '0 48px', height: 60,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      background: c.bg + 'dd', backdropFilter: 'blur(20px)',
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
+    }}>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: 10,
+          background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontSize: 16, fontWeight: 900,
+        }}>
+          S
+        </div>
+        <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: '-0.02em' }}>
+          <span style={{
+            background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            SOTARadar
+          </span>
+        </span>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 4 }}>
+        {([
+          { id: 'home' as const,    label: '🏠 首页' },
+          { id: 'library' as const, label: '📚 模型知识库' },
+          { id: 'skills' as const,  label: '📄 Skills文档库' },
+        ]).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => onNavigate(tab.id)}
+            style={{
+              padding: '5px 14px', borderRadius: 8, border: 'none',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              background: active === tab.id ? c.accent + '22' : 'transparent',
+              color: active === tab.id ? c.accent : c.muted,
+              borderBottom: active === tab.id ? `2px solid ${c.accent}` : '2px solid transparent',
+              transition: 'all 0.15s',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Right side */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 12 }}>
+        <span style={{ color: c.muted }}>多智能体协作 · 每日运转</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.green }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: c.green, boxShadow: `0 0 8px ${c.green}` }} />
+          LIVE
+        </span>
+        <span style={{ color: c.accent, fontWeight: 700, fontSize: 11 }}>⚡ Powered by OpenClaw</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── SkillsViewer 主组件 ─────────────────────────────────────────────────────
+export default function SkillsViewer({ onNavigate }: { onNavigate?: (tab: 'home' | 'library' | 'skills') => void }) {
   const [selected, setSelected] = useState<string | null>(null)
   const skill = skills.find(s => s.id === selected)
 
   return (
     <div style={{ minHeight: '100vh', background: c.bg, color: c.text, fontFamily: "'Inter',system-ui,sans-serif" }}>
-      {/* Header */}
-      <div style={{
-        borderBottom: `1px solid ${c.border}`, padding: '0 48px', height: 60,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: c.bg + 'dd', backdropFilter: 'blur(20px)',
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 10,
-            background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 16, fontWeight: 900,
-          }}>
-            S
-          </div>
-          <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: '-0.02em' }}>
-            <span style={{
-              background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              Skills 文档库
-            </span>
-          </span>
-        </div>
-        <span style={{ fontSize: 12, color: c.muted }}>{skills.length} 个智能体 · 实时运转</span>
-      </div>
+      {/* 顶部导航 Tab */}
+      <NavTabs active="skills" onNavigate={onNavigate ?? (() => {})} />
 
       {/* Content */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '100px 48px 60px', position: 'relative', zIndex: 1 }}>

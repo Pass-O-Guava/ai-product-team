@@ -1,46 +1,33 @@
 /**
- * ModelLibrary — Full page with search, filter, and model cards.
- * Uses API with automatic fallback to static data.
+ * ModelLibrary — 全模型知识库页面（带导航Tab）
  */
 import { useState, useEffect, useCallback } from 'react'
 import { fetchModels, type ModelSummary } from './api'
 import { staticModelInsights } from './dataLib'
+import { NavTabs } from './SkillsViewer'
 
-// ─── Design tokens (match AppC) ───────────────────────────────────────────────
+// ─── Design tokens ─────────────────────────────────────────────────────────────
 const c = {
-  bg: '#030712',
-  surface: '#0f172a',
-  card: '#111827',
-  border: '#1e293b',
-  text: '#f1f5f9',
-  muted: '#64748b',
-  accent: '#38bdf8',
-  accent2: '#818cf8',
-  green: '#34d399',
-  red: '#f87171',
-  amber: '#fbbf24',
-  purple: '#a78bfa',
-  pink: '#f472b6',
+  bg: '#030712', surface: '#0f172a', card: '#111827',
+  border: '#1e293b', text: '#f1f5f9', muted: '#64748b',
+  accent: '#38bdf8', accent2: '#818cf8', green: '#34d399',
+  red: '#f87171', amber: '#fbbf24', purple: '#a78bfa', pink: '#f472b6',
 }
 
-// ─── Category config ──────────────────────────────────────────────────────────
+// ─── Category config ───────────────────────────────────────────────────────────
 const CATEGORIES = ['全部', 'Text', 'Video', 'Embedding', 'Multimodal', 'Audio', 'Image']
 const LICENSES = ['全部', 'Apache-2.0', 'MIT', 'GPL-3.0', 'Custom', 'unknown']
 const SORTS = ['最近更新', '名称 A-Z', 'Benchmark评分', '参数量']
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Text: c.accent,
-  Video: c.purple,
-  Embedding: c.green,
-  Multimodal: c.amber,
-  Audio: c.pink,
-  Image: '#fb923c',
+  Text: c.accent, Video: c.purple, Embedding: c.green,
+  Multimodal: c.amber, Audio: c.pink, Image: '#fb923c',
 }
 const CATEGORY_ICONS: Record<string, string> = {
   Text: '📝', Video: '🎬', Embedding: '🔢', Multimodal: '🧠', Audio: '🔊', Image: '🖼️',
 }
 
-// ─── Skeleton card ────────────────────────────────────────────────────────────
+// ─── Skeleton card ─────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
     <div style={{
@@ -48,7 +35,7 @@ function SkeletonCard() {
       borderRadius: 14, padding: '16px',
       animation: 'pulse 1.5s ease-in-out infinite',
     }}>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }`}</style>
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ width: 60, height: 18, background: c.border, borderRadius: 6 }} />
         <div style={{ width: 50, height: 18, background: c.border, borderRadius: 6 }} />
@@ -64,8 +51,8 @@ function SkeletonCard() {
   )
 }
 
-// ─── Model card ───────────────────────────────────────────────────────────────
-function ModelCard({ model, idx }: { model: ModelSummary; idx: number }) {
+// ─── Model card ────────────────────────────────────────────────────────────────
+function ModelCard({ model }: { model: ModelSummary }) {
   const insight = staticModelInsights[model.id] || `由 ${model.publisher} 发布 · ${model.params} · ${model.license_tag}`
   const catColor = CATEGORY_COLORS[model.category] || c.muted
   const catIcon = CATEGORY_ICONS[model.category] || '🤖'
@@ -73,9 +60,8 @@ function ModelCard({ model, idx }: { model: ModelSummary; idx: number }) {
   return (
     <div style={{
       background: c.surface, border: `1px solid ${c.border}`,
-      borderRadius: 14, padding: '16px',
+      borderRadius: 14, padding: '16px', cursor: 'pointer',
       transition: 'all 0.2s',
-      cursor: 'pointer',
     }}
     onMouseEnter={e => {
       (e.currentTarget as HTMLDivElement).style.borderColor = catColor + '60'
@@ -92,8 +78,7 @@ function ModelCard({ model, idx }: { model: ModelSummary; idx: number }) {
           <span style={{ fontSize: 12 }}>{catIcon}</span>
           <span style={{
             fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100,
-            background: catColor + '20', color: catColor,
-            border: `1px solid ${catColor}40`,
+            background: catColor + '20', color: catColor, border: `1px solid ${catColor}40`,
           }}>
             {model.category}
           </span>
@@ -101,8 +86,7 @@ function ModelCard({ model, idx }: { model: ModelSummary; idx: number }) {
         {model.is_sota && (
           <span style={{
             fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 100,
-            background: c.amber + '20', color: c.amber,
-            border: `1px solid ${c.amber}40`,
+            background: c.amber + '20', color: c.amber, border: `1px solid ${c.amber}40`,
           }}>
             ⚡ SOTA
           </span>
@@ -141,7 +125,7 @@ function ModelCard({ model, idx }: { model: ModelSummary; idx: number }) {
         </span>
       </div>
 
-      {/* Insight / summary */}
+      {/* Insight */}
       <div style={{
         fontSize: 11, color: c.muted, lineHeight: 1.6,
         padding: '8px 10px', background: c.bg, borderRadius: 8,
@@ -153,7 +137,7 @@ function ModelCard({ model, idx }: { model: ModelSummary; idx: number }) {
   )
 }
 
-// ─── Empty state ─────────────────────────────────────────────────────────────
+// ─── Empty state ───────────────────────────────────────────────────────────────
 function EmptyState({ search }: { search: string }) {
   return (
     <div style={{ textAlign: 'center', padding: '60px 0' }}>
@@ -162,14 +146,16 @@ function EmptyState({ search }: { search: string }) {
         {search ? '未找到匹配的模型' : '暂无模型数据'}
       </div>
       <div style={{ fontSize: 13, color: c.muted }}>
-        {search ? `没有找到包含"${search}"的模型，请尝试其他关键词` : '后台正在初始化数据，请稍后再试'}
+        {search
+          ? `没有找到包含"${search}"的模型，请尝试其他关键词`
+          : '后台正在初始化数据，请稍后再试'}
       </div>
     </div>
   )
 }
 
-// ─── Main component ──────────────────────────────────────────────────────────
-export default function ModelLibrary() {
+// ─── 主组件 ────────────────────────────────────────────────────────────────────
+export default function ModelLibrary({ onNavigate }: { onNavigate?: (tab: 'home' | 'library' | 'skills') => void }) {
   const [models, setModels] = useState<ModelSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -191,7 +177,7 @@ export default function ModelLibrary() {
       setModels(result.models)
       setTotal(result.total)
       setPage(pg)
-    } catch (e) {
+    } catch {
       setError('加载失败，请稍后重试')
     } finally {
       setLoading(false)
@@ -221,43 +207,15 @@ export default function ModelLibrary() {
         }} />
       </div>
 
-      {/* Header */}
-      <div style={{
-        borderBottom: `1px solid ${c.border}`, padding: '0 48px', height: 60,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: c.bg + 'dd', backdropFilter: 'blur(20px)',
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 10,
-            background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 16, fontWeight: 900,
-          }}>
-            S
-          </div>
-          <span style={{ fontSize: 17, fontWeight: 900, letterSpacing: '-0.02em' }}>
-            <span style={{
-              background: `linear-gradient(135deg,${c.accent},${c.accent2})`,
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              模型知识库
-            </span>
-          </span>
-        </div>
-        <span style={{ fontSize: 12, color: c.muted }}>
-          共 {total} 个模型 · 实时同步中
-        </span>
-      </div>
+      {/* 顶部导航 Tab（复用 SkillsViewer 中的 NavTabs） */}
+      <NavTabs active="library" onNavigate={onNavigate ?? (() => {})} />
 
       {/* Content */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '100px 48px 60px', position: 'relative', zIndex: 1 }}>
 
-        {/* Search + filters */}
+        {/* 搜索 + 筛选 */}
         <div style={{ marginBottom: 24 }}>
-          {/* Search bar */}
+          {/* 搜索框 */}
           <div style={{ position: 'relative', marginBottom: 16 }}>
             <span style={{
               position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
@@ -279,7 +237,7 @@ export default function ModelLibrary() {
             />
           </div>
 
-          {/* Filter rows */}
+          {/* 筛选行 */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             {/* Category pills */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -308,8 +266,7 @@ export default function ModelLibrary() {
                 onChange={e => { setLicense(e.target.value); setPage(1) }}
                 style={{
                   padding: '5px 10px', borderRadius: 8, background: c.surface,
-                  color: c.text, border: `1px solid ${c.border}`, fontSize: 12,
-                  cursor: 'pointer',
+                  color: c.text, border: `1px solid ${c.border}`, fontSize: 12, cursor: 'pointer',
                 }}
               >
                 {LICENSES.map(l => <option key={l} value={l}>{l === '全部' ? '📄 许可证' : l}</option>)}
@@ -321,8 +278,7 @@ export default function ModelLibrary() {
                 onChange={e => setSort(e.target.value)}
                 style={{
                   padding: '5px 10px', borderRadius: 8, background: c.surface,
-                  color: c.text, border: `1px solid ${c.border}`, fontSize: 12,
-                  cursor: 'pointer',
+                  color: c.text, border: `1px solid ${c.border}`, fontSize: 12, cursor: 'pointer',
                 }}
               >
                 {SORTS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -336,8 +292,7 @@ export default function ModelLibrary() {
           <div style={{
             padding: '10px 16px', borderRadius: 10, marginBottom: 16,
             background: c.red + '15', border: `1px solid ${c.red}40`,
-            color: c.red, fontSize: 13, display: 'flex', justifyContent: 'space-between',
-            alignItems: 'center',
+            color: c.red, fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <span>⚠️ {error}</span>
             <button
@@ -354,10 +309,7 @@ export default function ModelLibrary() {
 
         {/* Cards grid */}
         {loading ? (
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: 16,
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : models.length === 0 ? (
@@ -368,7 +320,7 @@ export default function ModelLibrary() {
               display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
               gap: 16, marginBottom: 24,
             }}>
-              {models.map((m, i) => <ModelCard key={m.id} model={m} idx={i} />)}
+              {models.map(m => <ModelCard key={m.id} model={m} />)}
             </div>
 
             {/* Pagination */}

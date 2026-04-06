@@ -931,10 +931,10 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
 
       {/* ── Non-home pages ── */}
       {activeTab !== 'home' && (
-        <div style={{ paddingTop: 60 }}>
-          {activeTab === 'library' && <ModelLibrary />}
-          {activeTab === 'skills' && <SkillsViewer />}
-        </div>
+        <>
+          {activeTab === 'library' && <ModelLibrary onNavigate={setActiveTab} />}
+          {activeTab === 'skills' && <SkillsViewer onNavigate={setActiveTab} />}
+        </>
       )}
 
       {/* ── Home page ── */}
