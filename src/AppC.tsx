@@ -14,7 +14,14 @@ import {
   type DagNode,
   type NodeStatus,
 } from './dataC'
-import { triggerFlywheel, fetchStatus, type StatusInfo } from './api'
+import {
+  triggerFlywheel,
+  fetchStatus,
+  fetchRunStatus,
+  fetchEvolutionStatus,
+  type StatusInfo,
+  type FlywheelRun,
+} from './api'
 
 // 本地生成 run_id（不依赖后端）
 function genRunId(): string {
@@ -781,6 +788,7 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
   const [activeTab, setActiveTab] = useState<'home' | 'library' | 'skills'>(activePage as 'home' | 'library' | 'skills')
   const [status, setStatus] = useState<StatusInfo | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+  const runIdRef = useRef<string | null>(null)  // 当前飞轮 run_id，供轮询使用
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => { setTimeout(() => setMounted(true), 100) }, [])
@@ -807,11 +815,28 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
 
   async function handleTrigger() {
     if (animating) return
-    const runId = genRunId()
-    showToast(`🚀 飞轮已触发！run_id: ${runId.slice(0, 18)}…`, 'success')
 
-    // 立即更新状态为 RUNNING
-    setStatus({
+    // 调用真实后端 API 触发飞轮
+    let runId: string
+    try {
+      const res = await triggerFlywheel()
+      runId = res.run_id
+      showToast(`🚀 飞轮已触发！run_id: ${runId.slice(0, 18)}…`, 'success')
+    } catch (err) {
+      showToast(`❌ 触发失败：${err}`, 'error')
+      return
+    }
+
+    // 立即将 runId 存入 ref，供轮询使用
+    runIdRef.current = runId
+
+    setAnimating(true)
+    setProgress(0)
+    setTriggerCount(c => c + 1)
+
+    // 立即更新状态为 RUNNING（乐观更新）
+    setStatus(prev => ({
+      ...(prev ?? { state: 'IDLE', current_run: null, today_runs: 0, today_models_updated: 0 }),
       state: 'RUNNING',
       current_run: {
         run_id: runId,
@@ -820,35 +845,59 @@ export default function AppC({ activePage = 'home' }: { activePage?: string }) {
         finished_at: null,
         progress: 0,
       },
-      today_runs: (status?.today_runs ?? 0) + 1,
-      today_models_updated: status?.today_models_updated ?? 0,
-    })
+      today_runs: (prev?.today_runs ?? 0) + 1,
+    }))
 
-    setAnimating(true)
-    setProgress(0)
-    let p = 0
-    timerRef.current = setInterval(() => {
-      p += 2
-      setProgress(p)
-      if (p >= 100) {
-        clearInterval(timerRef.current!)
-        setAnimating(false)
-        setProgress(100)
-        // 完成后更新状态
+    // 轮询 run 状态（每 3 秒），实时更新 DAG 和进度条
+    timerRef.current = setInterval(async () => {
+      try {
+        const run = await fetchRunStatus(runId)
+        if (!run) return
+
+        // 进度条
+        setProgress(Math.round(run.progress * 100))
+
+        // 更新完整状态
         setStatus(prev => prev ? {
           ...prev,
-          state: 'IDLE',
+          state: run.status,
           current_run: prev.current_run ? {
             ...prev.current_run,
-            status: 'DONE',
-            finished_at: new Date().toISOString(),
-            progress: 100,
+            status: run.status,
+            progress: run.progress,
+            finished_at: run.finished_at,
           } : null,
         } : null)
-        setTriggerCount(c => c + 1)
-        showToast(`✅ 第 ${(status?.today_runs ?? 0) + 1} 轮飞轮运转完成！`, 'success')
+
+        // 飞轮完成
+        if (run.status === 'COMPLETED' || run.status === 'FAILED') {
+          clearInterval(timerRef.current!)
+          setAnimating(false)
+          setProgress(run.status === 'COMPLETED' ? 100 : 0)
+
+          if (run.status === 'COMPLETED') {
+            // 更新 Skills 自进化展示
+            try {
+              const evo = await fetchEvolutionStatus()
+              if (evo) {
+                const latestEvo = evo.recent_evolutions?.[0]
+                if (run.results?.evolution_triggered !== false) {
+                  showToast(
+                    `✅ 第${run.results?.iteration ?? '?'}轮完成！`
+                    + (latestEvo ? ` 自进化触发：${latestEvo.trigger_reason}` : ''),
+                    'success'
+                  )
+                }
+              }
+            } catch { /* ignore */ }
+          } else {
+            showToast(`❌ 飞轮失败：${run.errors?.[0] ?? '未知错误'}`, 'error')
+          }
+        }
+      } catch {
+        // 轮询错误不弹 toast，避免刷屏
       }
-    }, 80)
+    }, 3000)
   }
 
   return (

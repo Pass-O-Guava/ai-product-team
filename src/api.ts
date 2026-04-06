@@ -1,9 +1,12 @@
 /**
- * API client for SOTA Radar — tries live backend, falls back to static data.
+ * API client for SOTA Radar — 真实后端 + 静态 fallback。
+ * 生产: VITE_API_BASE 配置（默认 :7860 同源代理）
+ * 开发: http://localhost:7860
  */
 import { staticModels } from './dataLib'
 
-const API_BASE = 'http://localhost:7860'
+const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE)
+  || `${window.location.protocol}//${window.location.hostname}:7860`
 
 export interface ModelSummary {
   id: string; name: string; category: string; publisher: string
@@ -11,21 +14,87 @@ export interface ModelSummary {
 }
 
 export interface ModelDetail extends ModelSummary {
-  benchmarks: {name: string; score: string; source?: string}[]
+  benchmarks: { name: string; score: string; source?: string }[]
   hf_url: string; modality: string; insight: string; knowledge?: string
 }
 
-export interface StatusInfo {
+// ─── Flywheel Run & DAG State ────────────────────────────────────────────────
+
+export interface FlywheelStep {
+  step: string
+  started_at: string | null
+  finished_at: string | null
+  status: 'pending' | 'running' | 'done' | 'failed'
+  message: string
+}
+
+export interface FlywheelRun {
+  run_id: string
+  status: 'IDLE' | 'RUNNING' | 'COMPLETING' | 'COMPLETED' | 'FAILED'
+  started_at: string | null
+  finished_at: string | null
+  progress: number
+  steps: FlywheelStep[]
+  results: {
+    models_researched?: number
+    models_passed?: number
+    models_rejected?: number
+    p0_count?: number
+    skills_updated?: string[]
+    evolution_triggered?: boolean
+    evolution_reason?: string
+    iteration?: number
+  }
+  errors: string[]
+}
+
+export interface CurrentStatus {
   state: string
-  current_run: { run_id: string; status: string; started_at: string; finished_at: string | null; progress: number } | null
+  current_run: {
+    run_id: string; status: string; started_at: string
+    finished_at: string | null; progress: number
+  } | null
   today_runs: number
   today_models_updated: number
 }
 
+// 向后兼容别名
+export type StatusInfo = CurrentStatus
+
+// ─── Skills Evolution ─────────────────────────────────────────────────────────
+
+export interface EvolutionStatus {
+  skills_index: Record<string, {
+    version: string; updated_at: string; trigger: string; file: string
+    changelog: { version: string; updated_at: string; trigger: string }[]
+  }>
+  recent_evolutions: {
+    id: string; run_id: string; iteration: number
+    trigger_reason: string
+    patterns_found: { type: string; description: string; count: number }[]
+    skills_updated: string[]
+    logged_at: string
+  }[]
+  next_iteration: number
+}
+
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+async function apiFetch(path: string, opts?: RequestInit): Promise<any> {
+  const r = await fetch(`${API_BASE}${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts?.headers ?? {}) },
+  })
+  if (!r.ok) throw new Error(`API ${r.status}: ${r.statusText}`)
+  return r.json()
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
 export async function fetchModels(params?: {
   category?: string; license?: string; search?: string
   sort?: string; page?: number; page_size?: number
-}): Promise<{models: ModelSummary[]; total: number}> {
+}): Promise<{ models: ModelSummary[]; total: number }> {
   try {
     const q = new URLSearchParams()
     if (params?.category && params.category !== '全部') q.set('category', params.category)
@@ -34,12 +103,8 @@ export async function fetchModels(params?: {
     if (params?.sort) q.set('sort', params.sort)
     if (params?.page) q.set('page', String(params.page))
     if (params?.page_size) q.set('page_size', String(params.page_size ?? 12))
-    const r = await fetch(`${API_BASE}/api/v1/models?${q}`)
-    if (!r.ok) throw new Error('API error')
-    const data = await r.json()
-    return data
+    return await apiFetch(`/api/v1/models?${q}`)
   } catch {
-    // Fallback to static data
     let models = [...staticModels]
     if (params?.category && params.category !== '全部') {
       models = models.filter(m => m.category === params.category)
@@ -50,15 +115,11 @@ export async function fetchModels(params?: {
     if (params?.search) {
       const q = params.search.toLowerCase()
       models = models.filter(m =>
-        m.name.toLowerCase().includes(q) ||
-        m.publisher.toLowerCase().includes(q)
+        m.name.toLowerCase().includes(q) || m.publisher.toLowerCase().includes(q)
       )
     }
     if (params?.sort === '名称 A-Z') {
       models = [...models].sort((a, b) => a.name.localeCompare(b.name))
-    } else if (params?.sort === 'Benchmark评分') {
-      // Keep original order (Benchmark sort needs benchmark data only available in detail)
-      models = [...models]
     }
     return { models, total: models.length }
   }
@@ -66,29 +127,40 @@ export async function fetchModels(params?: {
 
 export async function fetchModelDetail(id: string): Promise<ModelDetail | null> {
   try {
-    const r = await fetch(`${API_BASE}/api/v1/models/${id}`)
-    if (!r.ok) throw new Error()
-    return await r.json()
+    return await apiFetch(`/api/v1/models/${id}`)
   } catch {
     return null
   }
 }
 
-export async function triggerFlywheel(modelIds?: string[]): Promise<{run_id: string; status: string}> {
-  const r = await fetch(`${API_BASE}/api/v1/flywheel/trigger`, {
+// ─── Flywheel ─────────────────────────────────────────────────────────────────
+
+export async function triggerFlywheel(modelIds?: string[]): Promise<{ run_id: string; status: string }> {
+  return apiFetch(`/api/v1/flywheel/trigger`, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ model_ids: modelIds ?? [] }),
   })
-  if (!r.ok) throw new Error('Trigger failed')
-  return await r.json()
 }
 
-export async function fetchStatus(): Promise<StatusInfo | null> {
+export async function fetchStatus(): Promise<CurrentStatus | null> {
   try {
-    const r = await fetch(`${API_BASE}/api/v1/status/current`)
-    if (!r.ok) throw new Error()
-    return await r.json()
+    return await apiFetch(`/api/v1/status/current`)
+  } catch {
+    return null
+  }
+}
+
+export async function fetchRunStatus(runId: string): Promise<FlywheelRun | null> {
+  try {
+    return await apiFetch(`/api/v1/flywheel/status/${runId}`)
+  } catch {
+    return null
+  }
+}
+
+export async function fetchEvolutionStatus(): Promise<EvolutionStatus | null> {
+  try {
+    return await apiFetch(`/api/v1/flywheel/evolution/status`)
   } catch {
     return null
   }
