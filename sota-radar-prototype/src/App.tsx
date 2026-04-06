@@ -105,7 +105,7 @@ function VersionSwitcher({ current, onSwitch }: { current: string; onSwitch: (v:
 }
 
 // 根据版本号确定activePage
-function getActivePage(version: string): 'home' | 'library' | 'skills' {
+function getActivePage(version: string): string {
   if (version === 'v3.0') return 'library'
   if (version === 'v3.1') return 'skills'
   return 'home'
@@ -123,7 +123,7 @@ export default function App() {
 
       {/* 主版本：V2.x ~ V8.x 均使用 AppC（首页 + 标签导航） */}
       {currentVersion !== 'v1.0' && (
-        <AppC activePage={getActivePage(currentVersion)} />
+        <AppC version={currentVersion} activePage={getActivePage(currentVersion) as any} />
       )}
     </div>
   )
